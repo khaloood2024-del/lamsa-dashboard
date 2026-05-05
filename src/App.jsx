@@ -171,10 +171,10 @@ function LoginScreen({ onLogin }) {
 }
 
 export default function SalonDashboard() {
-  const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lamsa_auth") === "true");
+  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem("lamsa_auth") === "true");
 
   const handleLogin = () => {
-    sessionStorage.setItem("lamsa_auth", "true");
+    localStorage.setItem("lamsa_auth", "true");
     setLoggedIn(true);
   };
 
