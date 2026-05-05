@@ -91,7 +91,7 @@ function BookingRow({ b, onCancel }) {
 }
 
 // ─── LOGIN SCREEN ────────────────────────────────────────────────
-const PASSWORD = "123456"; // غيري كلمة المرور هنا
+const PASSWORD = "lamsa2026"; // غيري كلمة المرور هنا
 
 function LoginScreen({ onLogin }) {
   const [pwd, setPwd]     = useState("");
@@ -171,14 +171,9 @@ function LoginScreen({ onLogin }) {
 }
 
 export default function SalonDashboard() {
-  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem("lamsa_auth") === "true");
+  const [loggedIn, setLoggedIn] = useState(false);
 
-  const handleLogin = () => {
-    localStorage.setItem("lamsa_auth", "true");
-    setLoggedIn(true);
-  };
-
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+  if (!loggedIn) return <LoginScreen onLogin={()=> setLoggedIn(true)}/>;
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
