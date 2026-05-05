@@ -171,9 +171,14 @@ function LoginScreen({ onLogin }) {
 }
 
 export default function SalonDashboard() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(() => window.location.hash === "#authenticated");
 
-  if (!loggedIn) return <LoginScreen onLogin={()=> setLoggedIn(true)}/>;
+  const handleLogin = () => {
+    window.location.hash = "authenticated";
+    setLoggedIn(true);
+  };
+
+  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
