@@ -90,7 +90,90 @@ function BookingRow({ b, onCancel }) {
   );
 }
 
+// ─── LOGIN SCREEN ────────────────────────────────────────────────
+const PASSWORD = "123456"; // غيري كلمة المرور هنا
+
+function LoginScreen({ onLogin }) {
+  const [pwd, setPwd]     = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const handleLogin = () => {
+    if (pwd === PASSWORD) {
+      onLogin();
+    } else {
+      setError(true);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight:"100vh", background:"#0d0508",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      fontFamily:"'Noto Naskh Arabic',serif", direction:"rtl",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+      `}</style>
+      <div style={{
+        background:"rgba(255,255,255,0.03)", border:"1px solid rgba(212,175,55,0.25)",
+        borderRadius:20, padding:"40px 36px", width:340,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
+        animation: shake ? "shake 0.4s ease" : "none",
+      }}>
+        <div style={{textAlign:"center", marginBottom:32}}>
+          <div style={{
+            width:60, height:60, borderRadius:14, margin:"0 auto 14px",
+            background:"linear-gradient(135deg,#d4af37,#8b6914)",
+            display:"flex", alignItems:"center", justifyContent:"center", fontSize:28,
+          }}>✨</div>
+          <div style={{color:"#d4af37", fontWeight:700, fontSize:20}}>لمسة</div>
+          <div style={{color:"rgba(255,255,255,0.35)", fontSize:13, marginTop:4}}>لوحة تحكم الصالون</div>
+        </div>
+
+        <div style={{marginBottom:16}}>
+          <input
+            type="password"
+            value={pwd}
+            onChange={e=>{setPwd(e.target.value); setError(false);}}
+            onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+            placeholder="كلمة المرور"
+            style={{
+              width:"100%", background:"rgba(255,255,255,0.05)",
+              border: error ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(212,175,55,0.2)",
+              borderRadius:12, padding:"12px 16px", color:"#e8d5a3",
+              fontSize:14, outline:"none", direction:"rtl",
+              boxSizing:"border-box",
+            }}
+            onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"}
+            onBlur={e=>e.target.style.borderColor=error?"rgba(239,68,68,0.6)":"rgba(212,175,55,0.2)"}
+          />
+          {error && <div style={{color:"#f87171", fontSize:12, marginTop:6}}>كلمة المرور غلط</div>}
+        </div>
+
+        <button onClick={handleLogin} style={{
+          width:"100%", padding:"12px",
+          background:"linear-gradient(135deg,#d4af37,#8b6914)",
+          border:"none", borderRadius:12, color:"#1a0a0f",
+          fontFamily:"inherit", fontSize:14, fontWeight:700, cursor:"pointer",
+          transition:"opacity 0.2s",
+        }}
+        onMouseEnter={e=>e.currentTarget.style.opacity="0.9"}
+        onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          دخول
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SalonDashboard() {
+  const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lamsa_auth") === "true");
+
+  if (!loggedIn) return <LoginScreen onLogin={()=>{ sessionStorage.setItem("lamsa_auth","true"); setLoggedIn(true); }}/>;
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
