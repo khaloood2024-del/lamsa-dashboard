@@ -175,7 +175,7 @@ export default function SalonDashboard() {
 
   const handleLogin = () => {
     window.location.hash = "authenticated";
-    setLoggedIn(true);
+    window.location.reload();
   };
 
   if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
