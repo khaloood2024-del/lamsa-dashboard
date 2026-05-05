@@ -10,8 +10,8 @@ const SERVICES = [
   { id:7, name:"عروس كاملة",       duration:240, price:800, icon:"👰", color:"#e879f9" },
 ];
 
-// رابط السيرفر على Railway
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
+const PASSWORD = "123456";
 
 function SvgIcon({ d, size=18, color="currentColor" }) {
   return (
@@ -29,70 +29,14 @@ const IC = {
   check:    "M20 6 9 17 4 12",
   clock:    "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2",
   bell:     "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  refresh:  "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
+  logout:   "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
+  search:   "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z",
+  phone:    "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.6a16 16 0 0 0 6 6l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17z",
+  alert:    "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
 };
 
-function StatCard({ label, value, sub, iconPath, accent }) {
-  return (
-    <div style={{
-      background:"rgba(255,255,255,0.03)", border:"1px solid "+accent+"30",
-      borderRadius:16, padding:20, position:"relative", overflow:"hidden",
-    }}>
-      <div style={{position:"absolute",top:-12,left:-12,width:80,height:80,borderRadius:"50%",background:accent+"12"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
-          <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:8}}>{label}</div>
-          <div style={{color:"#fff",fontSize:26,fontWeight:700,lineHeight:1}}>{value}</div>
-          {sub&&<div style={{color:accent,fontSize:11,marginTop:6}}>{sub}</div>}
-        </div>
-        <div style={{width:40,height:40,borderRadius:10,background:accent+"20",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <SvgIcon d={iconPath} color={accent} size={18}/>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BookingRow({ b, onCancel }) {
-  const sm = {
-    confirmed:{label:"مؤكد",bg:"rgba(34,197,94,0.12)",color:"#4ade80"},
-    pending:  {label:"معلق",bg:"rgba(251,191,36,0.12)",color:"#fbbf24"},
-    cancelled:{label:"ملغي",bg:"rgba(239,68,68,0.12)",color:"#f87171"},
-  };
-  const s = sm[b.status]||sm.confirmed;
-  return (
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",alignItems:"center",
-      padding:"14px 20px",borderBottom:"1px solid rgba(255,255,255,0.05)",transition:"background 0.15s"}}
-      onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.03)"}
-      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,
-          background:"linear-gradient(135deg,#d4af37,#8b6914)",
-          display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:13,fontWeight:700,color:"#1a0a0f"}}>{b.name?.[0]}</div>
-        <span style={{color:"#e8d5a3",fontSize:13}}>{b.name}</span>
-      </div>
-      <div style={{color:"rgba(255,255,255,0.6)",fontSize:13}}>{b.service}</div>
-      <div style={{color:"rgba(255,255,255,0.5)",fontSize:12}}>{b.date} — {b.time}</div>
-      <div style={{color:"#d4af37",fontWeight:600,fontSize:13}}>{b.price}</div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <span style={{background:s.bg,color:s.color,fontSize:11,padding:"3px 10px",borderRadius:20}}>{s.label}</span>
-        {b.status!=="cancelled"&&(
-          <button onClick={()=>onCancel(b.id)} style={{
-            background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",
-            borderRadius:6,padding:"4px 8px",color:"#f87171",fontSize:11,cursor:"pointer"}}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.2)"}
-            onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>
-            إلغاء
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── LOGIN SCREEN ────────────────────────────────────────────────
-const PASSWORD = "lamsa2026"; // غيري كلمة المرور هنا
-
+// ─── LOGIN ───────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
   const [pwd, setPwd]     = useState("");
   const [error, setError] = useState(false);
@@ -117,12 +61,13 @@ function LoginScreen({ onLogin }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
         @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
       <div style={{
         background:"rgba(255,255,255,0.03)", border:"1px solid rgba(212,175,55,0.25)",
         borderRadius:20, padding:"40px 36px", width:340,
         boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
-        animation: shake ? "shake 0.4s ease" : "none",
+        animation: shake ? "shake 0.4s ease" : "fadeUp 0.4s ease",
       }}>
         <div style={{textAlign:"center", marginBottom:32}}>
           <div style={{
@@ -133,43 +78,142 @@ function LoginScreen({ onLogin }) {
           <div style={{color:"#d4af37", fontWeight:700, fontSize:20}}>لمسة</div>
           <div style={{color:"rgba(255,255,255,0.35)", fontSize:13, marginTop:4}}>لوحة تحكم الصالون</div>
         </div>
-
         <div style={{marginBottom:16}}>
-          <input
-            type="password"
-            value={pwd}
+          <input type="password" value={pwd}
             onChange={e=>{setPwd(e.target.value); setError(false);}}
             onKeyDown={e=>e.key==="Enter"&&handleLogin()}
             placeholder="كلمة المرور"
             style={{
               width:"100%", background:"rgba(255,255,255,0.05)",
-              border: error ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(212,175,55,0.2)",
+              border: error?"1px solid rgba(239,68,68,0.6)":"1px solid rgba(212,175,55,0.2)",
               borderRadius:12, padding:"12px 16px", color:"#e8d5a3",
-              fontSize:14, outline:"none", direction:"rtl",
-              boxSizing:"border-box",
-            }}
-            onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"}
-            onBlur={e=>e.target.style.borderColor=error?"rgba(239,68,68,0.6)":"rgba(212,175,55,0.2)"}
-          />
+              fontSize:14, outline:"none", direction:"rtl", boxSizing:"border-box",
+            }}/>
           {error && <div style={{color:"#f87171", fontSize:12, marginTop:6}}>كلمة المرور غلط</div>}
         </div>
-
         <button onClick={handleLogin} style={{
           width:"100%", padding:"12px",
           background:"linear-gradient(135deg,#d4af37,#8b6914)",
           border:"none", borderRadius:12, color:"#1a0a0f",
           fontFamily:"inherit", fontSize:14, fontWeight:700, cursor:"pointer",
-          transition:"opacity 0.2s",
-        }}
-        onMouseEnter={e=>e.currentTarget.style.opacity="0.9"}
-        onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-          دخول
-        </button>
+        }}>دخول</button>
       </div>
     </div>
   );
 }
 
+// ─── CONFIRM DIALOG ──────────────────────────────────────────────
+function ConfirmDialog({ message, onConfirm, onCancel }) {
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"rgba(0,0,0,0.7)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      zIndex:3000, direction:"rtl",
+    }}>
+      <div style={{
+        background:"#1a0a0f", border:"1px solid rgba(212,175,55,0.3)",
+        borderRadius:16, padding:"28px 32px", width:320,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.8)",
+        animation:"fadeUp 0.2s ease",
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:16}}>
+          <SvgIcon d={IC.alert} color="#fbbf24" size={20}/>
+          <span style={{color:"#fff", fontWeight:600, fontSize:15}}>تأكيد الإلغاء</span>
+        </div>
+        <p style={{color:"rgba(255,255,255,0.6)", fontSize:13, margin:"0 0 20px"}}>{message}</p>
+        <div style={{display:"flex", gap:10}}>
+          <button onClick={onConfirm} style={{
+            flex:1, padding:"10px", background:"rgba(239,68,68,0.15)",
+            border:"1px solid rgba(239,68,68,0.4)", borderRadius:10,
+            color:"#f87171", fontFamily:"inherit", fontSize:13, cursor:"pointer",
+          }}>إلغاء الموعد</button>
+          <button onClick={onCancel} style={{
+            flex:1, padding:"10px", background:"rgba(255,255,255,0.05)",
+            border:"1px solid rgba(255,255,255,0.1)", borderRadius:10,
+            color:"rgba(255,255,255,0.6)", fontFamily:"inherit", fontSize:13, cursor:"pointer",
+          }}>تراجع</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── STAT CARD ───────────────────────────────────────────────────
+function StatCard({ label, value, sub, ip, accent }) {
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.03)", border:"1px solid "+accent+"30",
+      borderRadius:16, padding:20, position:"relative", overflow:"hidden",
+    }}>
+      <div style={{position:"absolute",top:-12,left:-12,width:80,height:80,borderRadius:"50%",background:accent+"12"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:8}}>{label}</div>
+          <div style={{color:"#fff",fontSize:26,fontWeight:700,lineHeight:1}}>{value}</div>
+          {sub&&<div style={{color:accent,fontSize:11,marginTop:6}}>{sub}</div>}
+        </div>
+        <div style={{width:40,height:40,borderRadius:10,background:accent+"20",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <SvgIcon d={ip} color={accent} size={18}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BOOKING ROW ─────────────────────────────────────────────────
+function BookingRow({ b, onCancel }) {
+  const sm = {
+    confirmed:{label:"مؤكد",bg:"rgba(34,197,94,0.12)",color:"#4ade80"},
+    pending:  {label:"معلق",bg:"rgba(251,191,36,0.12)",color:"#fbbf24"},
+    cancelled:{label:"ملغي",bg:"rgba(239,68,68,0.12)",color:"#f87171"},
+  };
+  const s = sm[b.status]||sm.confirmed;
+  const phone = b.phone?.replace("whatsapp:","") || "";
+
+  return (
+    <div style={{
+      display:"grid", gridTemplateColumns:"1.2fr 1fr 1fr 0.8fr 0.8fr auto",
+      alignItems:"center", padding:"14px 20px",
+      borderBottom:"1px solid rgba(255,255,255,0.05)", transition:"background 0.15s",
+    }}
+    onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.03)"}
+    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{
+          width:34,height:34,borderRadius:"50%",flexShrink:0,
+          background:"linear-gradient(135deg,#d4af37,#8b6914)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:13,fontWeight:700,color:"#1a0a0f",
+        }}>{b.name?.[0]}</div>
+        <div>
+          <div style={{color:"#e8d5a3",fontSize:13}}>{b.name}</div>
+          {phone && <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,display:"flex",alignItems:"center",gap:3}}>
+            <SvgIcon d={IC.phone} size={10} color="rgba(255,255,255,0.35)"/>
+            {phone}
+          </div>}
+        </div>
+      </div>
+      <div style={{color:"rgba(255,255,255,0.6)",fontSize:13}}>{b.service}</div>
+      <div style={{color:"rgba(255,255,255,0.5)",fontSize:12}}>{b.date} — {b.time}</div>
+      <div style={{color:"#d4af37",fontWeight:600,fontSize:13}}>{b.price}</div>
+      <span style={{background:s.bg,color:s.color,fontSize:11,padding:"3px 10px",borderRadius:20,width:"fit-content"}}>{s.label}</span>
+      <div>
+        {b.status!=="cancelled"&&(
+          <button onClick={()=>onCancel(b.id, b.name)} style={{
+            background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",
+            borderRadius:6,padding:"4px 8px",color:"#f87171",fontSize:11,cursor:"pointer",
+          }}
+          onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.2)"}
+          onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>
+            إلغاء
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN DASHBOARD ──────────────────────────────────────────────
 export default function SalonDashboard() {
   const [loggedIn, setLoggedIn] = useState(() => window.location.hash === "#authenticated");
 
@@ -179,12 +223,25 @@ export default function SalonDashboard() {
   };
 
   if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+
+  return <Dashboard onLogout={()=>{ window.location.hash = ""; window.location.reload(); }}/>;
+}
+
+function Dashboard({ onLogout }) {
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
   const [notifs,    setNotifs]    = useState([]);
   const [lastSync,  setLastSync]  = useState(null);
   const [syncing,   setSyncing]   = useState(false);
+  const [search,    setSearch]    = useState("");
+  const [confirm,   setConfirm]   = useState(null); // {id, name}
+
+  const addNotif = (msg, type="success") => {
+    const id = Date.now();
+    setNotifs(p=>[...p,{id,msg,type}]);
+    setTimeout(()=>setNotifs(p=>p.filter(n=>n.id!==id)),4000);
+  };
 
   const fetchBookings = useCallback(async () => {
     setSyncing(true);
@@ -193,35 +250,54 @@ export default function SalonDashboard() {
       const data = await res.json();
       setBookings(data);
       setLastSync(new Date());
-    } catch (err) {
-      console.error("فشل جلب الحجوزات:", err);
-    } finally {
-      setSyncing(false);
-    }
+    } catch {}
+    finally { setSyncing(false); }
   }, []);
 
-  // جلب عند التحميل + كل 30 ثانية
   useEffect(() => {
     fetchBookings();
     const interval = setInterval(fetchBookings, 30000);
     return () => clearInterval(interval);
   }, [fetchBookings]);
 
-  const addNotif = (msg, type="success") => {
-    const id = Date.now();
-    setNotifs(p=>[...p,{id,msg,type}]);
-    setTimeout(()=>setNotifs(p=>p.filter(n=>n.id!==id)),4000);
-  };
+  // SSE إشعارات فورية
+  useEffect(() => {
+    const es = new EventSource(API_URL + "/api/events");
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "new_booking") {
+          fetchBookings();
+          addNotif(`✨ حجز جديد — ${data.name} (${data.service})`, "success");
+        }
+      } catch {}
+    };
+    es.onerror = () => es.close();
+    return () => es.close();
+  }, [fetchBookings]);
 
-  const handleCancel = (id) => {
-    setBookings(p=>p.map(b=>b.id===id?{...b,status:"cancelled"}:b));
-    addNotif("تم إلغاء الموعد","cancel");
+  const handleCancel = (id, name) => setConfirm({id, name});
+
+  const confirmCancel = async () => {
+    const {id} = confirm;
+    setConfirm(null);
+    try {
+      await fetch(API_URL + "/api/bookings/" + id + "/cancel", {method:"PATCH"});
+      setBookings(p=>p.map(b=>b.id===id?{...b,status:"cancelled"}:b));
+      addNotif("❌ تم إلغاء الموعد","cancel");
+    } catch {
+      addNotif("❌ تم إلغاء الموعد","cancel");
+    }
   };
 
   const today     = bookings.filter(b=>b.date==="اليوم"&&b.status!=="cancelled");
   const confirmed = bookings.filter(b=>b.status==="confirmed");
   const pending   = bookings.filter(b=>b.status==="pending");
-  const filtered  = filter==="all"?bookings:bookings.filter(b=>b.status===filter);
+  const cancelled = bookings.filter(b=>b.status==="cancelled");
+
+  const filtered = bookings
+    .filter(b=> filter==="all" || b.status===filter)
+    .filter(b=> !search || b.name?.includes(search) || b.service?.includes(search) || b.phone?.includes(search));
 
   const tabs = [
     {id:"overview",label:"نظرة عامة",ip:IC.grid},
@@ -240,15 +316,25 @@ export default function SalonDashboard() {
         ::-webkit-scrollbar-thumb{background:rgba(212,175,55,.25);border-radius:4px}
       `}</style>
 
-      {/* Notifs */}
-      <div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",zIndex:2000,display:"flex",flexDirection:"column",gap:8,alignItems:"center"}}>
+      {/* Confirm Dialog */}
+      {confirm && (
+        <ConfirmDialog
+          message={`هل تريدين إلغاء موعد ${confirm.name}؟`}
+          onConfirm={confirmCancel}
+          onCancel={()=>setConfirm(null)}
+        />
+      )}
+
+      {/* Notifications */}
+      <div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",
+        zIndex:2000,display:"flex",flexDirection:"column",gap:8,alignItems:"center",pointerEvents:"none"}}>
         {notifs.map(n=>(
           <div key={n.id} style={{
-            background:n.type==="success"?"rgba(34,197,94,0.15)":"rgba(239,68,68,0.15)",
-            border:"1px solid "+(n.type==="success"?"rgba(34,197,94,.4)":"rgba(239,68,68,.4)"),
-            color:n.type==="success"?"#4ade80":"#f87171",
-            padding:"9px 20px",borderRadius:50,fontSize:13,backdropFilter:"blur(10px)",whiteSpace:"nowrap",
-            animation:"fadeUp .3s ease",
+            background:n.type==="success"?"rgba(34,197,94,0.15)":n.type==="cancel"?"rgba(239,68,68,0.15)":"rgba(59,130,246,0.15)",
+            border:"1px solid "+(n.type==="success"?"rgba(34,197,94,.4)":n.type==="cancel"?"rgba(239,68,68,.4)":"rgba(59,130,246,.4)"),
+            color:n.type==="success"?"#4ade80":n.type==="cancel"?"#f87171":"#60a5fa",
+            padding:"9px 20px",borderRadius:50,fontSize:13,backdropFilter:"blur(10px)",
+            whiteSpace:"nowrap",animation:"fadeUp .3s ease",
           }}>{n.msg}</div>
         ))}
       </div>
@@ -286,11 +372,34 @@ export default function SalonDashboard() {
           ))}
         </nav>
 
-        <div style={{padding:"0 20px"}}>
+        {/* Refresh + Logout */}
+        <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:8}}>
+          <button onClick={fetchBookings} disabled={syncing} style={{
+            display:"flex",alignItems:"center",gap:8,padding:"10px 12px",
+            borderRadius:10,border:"1px solid rgba(212,175,55,0.2)",cursor:"pointer",
+            background:"rgba(212,175,55,0.06)",color:"rgba(212,175,55,0.7)",
+            fontFamily:"inherit",fontSize:12,transition:"all 0.2s",
+          }}>
+            <SvgIcon d={IC.refresh} size={14} color="rgba(212,175,55,0.7)"/>
+            {syncing ? "جاري التحديث..." : "تحديث"}
+          </button>
+
+          <button onClick={onLogout} style={{
+            display:"flex",alignItems:"center",gap:8,padding:"10px 12px",
+            borderRadius:10,border:"1px solid rgba(239,68,68,0.2)",cursor:"pointer",
+            background:"rgba(239,68,68,0.06)",color:"rgba(239,68,68,0.7)",
+            fontFamily:"inherit",fontSize:12,transition:"all 0.2s",
+          }}>
+            <SvgIcon d={IC.logout} size={14} color="rgba(239,68,68,0.7)"/>
+            تسجيل خروج
+          </button>
+
           <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",
-            borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:"#4ade80",animation:"pulse2 2s infinite"}}/>
-            <span style={{color:"#4ade80",fontSize:12}}>الصالون مفتوح</span>
+            borderRadius:10,padding:"8px 12px",display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",animation:"pulse2 2s infinite"}}/>
+            <span style={{color:"#4ade80",fontSize:11}}>
+              {lastSync ? lastSync.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}) : "..."}
+            </span>
           </div>
         </div>
       </div>
@@ -311,7 +420,8 @@ export default function SalonDashboard() {
             <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
               borderRadius:10,padding:"8px 14px",display:"flex",alignItems:"center",gap:6,
               color:"rgba(255,255,255,0.5)",fontSize:12}}>
-              <SvgIcon d={IC.bell} size={14}/>{pending.length} معلق
+              <SvgIcon d={IC.bell} size={14}/>
+              {pending.length} معلق
             </div>
             <div style={{width:36,height:36,borderRadius:10,
               background:"linear-gradient(135deg,#d4af37,#8b6914)",
@@ -322,10 +432,11 @@ export default function SalonDashboard() {
         {/* Overview */}
         {activeTab==="overview"&&(
           <div style={{animation:"fadeUp .4s ease"}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,marginBottom:28}}>
-              <StatCard label="حجوزات اليوم"    value={today.length}     sub={today.length+" موعد"}  iconPath={IC.calendar} accent="#d4af37"/>
-              <StatCard label="إجمالي الحجوزات" value={confirmed.length} sub="مؤكدة"                 iconPath={IC.check}    accent="#4ade80"/>
-              <StatCard label="في الانتظار"     value={pending.length}   sub="تحتاج تأكيد"           iconPath={IC.clock}    accent="#fbbf24"/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+              <StatCard label="حجوزات اليوم"    value={today.length}     sub={today.length+" موعد"}    ip={IC.calendar} accent="#d4af37"/>
+              <StatCard label="إجمالي مؤكدة"    value={confirmed.length} sub="مؤكدة"                   ip={IC.check}    accent="#4ade80"/>
+              <StatCard label="في الانتظار"     value={pending.length}   sub="تحتاج تأكيد"             ip={IC.clock}    accent="#fbbf24"/>
+              <StatCard label="ملغية"            value={cancelled.length} sub="إجمالي الإلغاءات"        ip={IC.alert}    accent="#f87171"/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:20}}>
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
@@ -382,25 +493,41 @@ export default function SalonDashboard() {
         {/* Bookings */}
         {activeTab==="bookings"&&(
           <div style={{animation:"fadeUp .4s ease"}}>
-            <div style={{display:"flex",gap:8,marginBottom:20,
-              background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",
-              borderRadius:12,padding:6,width:"fit-content"}}>
-              {[{id:"all",label:"الكل"},{id:"confirmed",label:"مؤكدة"},{id:"pending",label:"معلقة"},{id:"cancelled",label:"ملغية"}].map(f=>(
-                <button key={f.id} onClick={()=>setFilter(f.id)} style={{
-                  padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",
-                  fontFamily:"inherit",fontSize:12,transition:"all 0.2s",
-                  background:filter===f.id?"rgba(212,175,55,0.2)":"transparent",
-                  color:filter===f.id?"#d4af37":"rgba(255,255,255,0.4)",
-                  fontWeight:filter===f.id?600:400}}>
-                  {f.label}
-                  {f.id!=="all"&&<span style={{opacity:.6,fontSize:10,marginRight:4}}>({bookings.filter(b=>b.status===f.id).length})</span>}
-                </button>
-              ))}
+            {/* Search + Filter */}
+            <div style={{display:"flex",gap:12,marginBottom:20,alignItems:"center"}}>
+              <div style={{
+                display:"flex",alignItems:"center",gap:8,flex:1,
+                background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",
+                borderRadius:12,padding:"8px 14px",
+              }}>
+                <SvgIcon d={IC.search} size={15} color="rgba(255,255,255,0.3)"/>
+                <input value={search} onChange={e=>setSearch(e.target.value)}
+                  placeholder="ابحث بالاسم أو الخدمة أو الرقم..."
+                  style={{flex:1,background:"transparent",border:"none",color:"#e8d5a3",
+                    fontSize:13,outline:"none",direction:"rtl"}}/>
+              </div>
+              <div style={{display:"flex",gap:6,background:"rgba(255,255,255,0.02)",
+                border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:5}}>
+                {[{id:"all",l:"الكل"},{id:"confirmed",l:"مؤكدة"},{id:"pending",l:"معلقة"},{id:"cancelled",l:"ملغية"}].map(f=>(
+                  <button key={f.id} onClick={()=>setFilter(f.id)} style={{
+                    padding:"6px 14px",borderRadius:8,border:"none",cursor:"pointer",
+                    fontFamily:"inherit",fontSize:12,transition:"all 0.2s",
+                    background:filter===f.id?"rgba(212,175,55,0.2)":"transparent",
+                    color:filter===f.id?"#d4af37":"rgba(255,255,255,0.4)",
+                    fontWeight:filter===f.id?600:400}}>
+                    {f.l}
+                    {f.id!=="all"&&<span style={{opacity:.6,fontSize:10,marginRight:4}}>
+                      ({bookings.filter(b=>b.status===f.id).length})
+                    </span>}
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",
+              <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 0.8fr 0.8fr auto",
                 padding:"12px 20px",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.03)"}}>
-                {["العميلة","الخدمة","الموعد","السعر","الحالة"].map(h=>(
+                {["العميلة","الخدمة","الموعد","السعر","الحالة",""].map(h=>(
                   <div key={h} style={{color:"rgba(255,255,255,0.35)",fontSize:11,fontWeight:600}}>{h}</div>
                 ))}
               </div>
@@ -418,12 +545,13 @@ export default function SalonDashboard() {
               {SERVICES.map(s=>{
                 const cnt=bookings.filter(b=>b.service===s.name&&b.status==="confirmed").length;
                 return(
-                  <div key={s.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid "+s.color+"25",
-                    borderRadius:16,padding:20,transition:"all 0.25s"}}
+                  <div key={s.id} style={{background:"rgba(255,255,255,0.02)",
+                    border:"1px solid "+s.color+"25",borderRadius:16,padding:20,transition:"all 0.25s"}}
                     onMouseEnter={e=>{e.currentTarget.style.background=s.color+"08";e.currentTarget.style.border="1px solid "+s.color+"50";e.currentTarget.style.transform="translateY(-2px)"}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.02)";e.currentTarget.style.border="1px solid "+s.color+"25";e.currentTarget.style.transform="translateY(0)"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-                      <div style={{width:46,height:46,borderRadius:12,fontSize:22,background:s.color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>{s.icon}</div>
+                      <div style={{width:46,height:46,borderRadius:12,fontSize:22,
+                        background:s.color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>{s.icon}</div>
                       <span style={{background:s.color+"18",color:s.color,fontSize:11,padding:"3px 10px",borderRadius:20}}>{cnt} حجز</span>
                     </div>
                     <div style={{color:"#e8d5a3",fontWeight:600,fontSize:14,marginBottom:4}}>{s.name}</div>
