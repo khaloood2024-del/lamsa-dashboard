@@ -11,7 +11,7 @@ const SERVICES = [
 ];
 
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
-const PASSWORD = "123456";
+const PASSWORD = "lamsa2026";
 
 function SvgIcon({ d, size=18, color="currentColor" }) {
   return (
@@ -227,6 +227,86 @@ export default function SalonDashboard() {
   return <Dashboard onLogout={()=>{ window.location.hash = ""; window.location.reload(); }}/>;
 }
 
+// ─── ADD BOOKING MODAL ───────────────────────────────────────────
+function AddBookingModal({ onClose, onAdd }) {
+  const SERVICES_LIST = ["باديكير وميديكير","تلوين شعر","قص وتصفيف","علاج بالأوزون","مساج استرخاء","تنظيف بشرة","عروس كاملة"];
+  const PRICES = {"باديكير وميديكير":"80 ريال","تلوين شعر":"250 ريال","قص وتصفيف":"150 ريال","علاج بالأوزون":"200 ريال","مساج استرخاء":"180 ريال","تنظيف بشرة":"220 ريال","عروس كاملة":"800 ريال"};
+  const [form, setForm] = useState({ name:"", service:SERVICES_LIST[0], date:"اليوم", time:"", phone:"" });
+  const [error, setError] = useState("");
+
+  const handleSubmit = () => {
+    if (!form.name.trim()) return setError("اسم العميلة مطلوب");
+    if (!form.time.trim()) return setError("الوقت مطلوب");
+    onAdd({ ...form, price: PRICES[form.service], id: Date.now(), status:"confirmed", source:"manual" });
+    onClose();
+  };
+
+  const inputStyle = {
+    width:"100%", background:"rgba(255,255,255,0.05)",
+    border:"1px solid rgba(212,175,55,0.2)", borderRadius:10,
+    padding:"10px 14px", color:"#e8d5a3", fontSize:13,
+    outline:"none", direction:"rtl", boxSizing:"border-box", fontFamily:"inherit",
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000,direction:"rtl"}}>
+      <div style={{background:"#1a0a0f",border:"1px solid rgba(212,175,55,0.3)",borderRadius:20,padding:"28px 32px",width:380,boxShadow:"0 20px 60px rgba(0,0,0,0.8)",animation:"fadeUp 0.2s ease"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <span style={{color:"#d4af37",fontWeight:700,fontSize:16}}>إضافة حجز يدوي</span>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>اسم العميلة *</div>
+            <input style={inputStyle} placeholder="مثال: نورة العتيبي" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}
+              onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(212,175,55,0.2)"}/>
+          </div>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>رقم الواتساب (اختياري)</div>
+            <input style={inputStyle} placeholder="+966..." value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}
+              onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(212,175,55,0.2)"}/>
+          </div>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>الخدمة *</div>
+            <select style={{...inputStyle,cursor:"pointer"}} value={form.service} onChange={e=>setForm({...form,service:e.target.value})}>
+              {SERVICES_LIST.map(s=><option key={s} value={s}>{s} — {PRICES[s]}</option>)}
+            </select>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div>
+              <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>التاريخ *</div>
+              <select style={{...inputStyle,cursor:"pointer"}} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}>
+                <option>اليوم</option>
+                <option>بكره</option>
+                <option>بعد بكره</option>
+              </select>
+            </div>
+            <div>
+              <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>الوقت *</div>
+              <input style={inputStyle} placeholder="مثال: 3:00 م" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}
+                onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"} onBlur={e=>e.target.style.borderColor="rgba(212,175,55,0.2)"}/>
+            </div>
+          </div>
+          {error && <div style={{color:"#f87171",fontSize:12}}>{error}</div>}
+        </div>
+
+        <div style={{display:"flex",gap:10,marginTop:20}}>
+          <button onClick={handleSubmit} style={{
+            flex:1,padding:"11px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
+            border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer",
+          }}>إضافة الحجز</button>
+          <button onClick={onClose} style={{
+            flex:1,padding:"11px",background:"rgba(255,255,255,0.05)",
+            border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,
+            color:"rgba(255,255,255,0.5)",fontFamily:"inherit",fontSize:13,cursor:"pointer",
+          }}>إلغاء</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({ onLogout }) {
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
@@ -235,7 +315,8 @@ function Dashboard({ onLogout }) {
   const [lastSync,  setLastSync]  = useState(null);
   const [syncing,   setSyncing]   = useState(false);
   const [search,    setSearch]    = useState("");
-  const [confirm,   setConfirm]   = useState(null); // {id, name}
+  const [confirm,   setConfirm]   = useState(null);
+  const [showAdd,   setShowAdd]   = useState(false);
 
   const addNotif = (msg, type="success") => {
     const id = Date.now();
@@ -278,6 +359,20 @@ function Dashboard({ onLogout }) {
 
   const handleCancel = (id, name) => setConfirm({id, name});
 
+  const handleAddBooking = async (b) => {
+    try {
+      await fetch(API_URL + "/api/bookings/manual", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(b),
+      });
+      fetchBookings();
+      addNotif("✅ تم إضافة الحجز", "success");
+    } catch {
+      setBookings(p=>[b,...p]);
+      addNotif("✅ تم إضافة الحجز", "success");
+    }
+  };
+
   const confirmCancel = async () => {
     const {id} = confirm;
     setConfirm(null);
@@ -315,6 +410,9 @@ function Dashboard({ onLogout }) {
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:rgba(212,175,55,.25);border-radius:4px}
       `}</style>
+
+      {/* Add Booking Modal */}
+      {showAdd && <AddBookingModal onClose={()=>setShowAdd(false)} onAdd={handleAddBooking}/>}
 
       {/* Confirm Dialog */}
       {confirm && (
@@ -423,6 +521,12 @@ function Dashboard({ onLogout }) {
               <SvgIcon d={IC.bell} size={14}/>
               {pending.length} معلق
             </div>
+            <button onClick={()=>setShowAdd(true)} style={{
+              display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+              background:"linear-gradient(135deg,#d4af37,#8b6914)",
+              border:"none",borderRadius:10,color:"#1a0a0f",
+              fontFamily:"inherit",fontSize:12,fontWeight:700,cursor:"pointer",
+            }}>+ إضافة حجز</button>
             <div style={{width:36,height:36,borderRadius:10,
               background:"linear-gradient(135deg,#d4af37,#8b6914)",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>👩‍💼</div>
