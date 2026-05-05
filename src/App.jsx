@@ -173,7 +173,12 @@ function LoginScreen({ onLogin }) {
 export default function SalonDashboard() {
   const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("lamsa_auth") === "true");
 
-  if (!loggedIn) return <LoginScreen onLogin={()=>{ sessionStorage.setItem("lamsa_auth","true"); setLoggedIn(true); }}/>;
+  const handleLogin = () => {
+    sessionStorage.setItem("lamsa_auth", "true");
+    setLoggedIn(true);
+  };
+
+  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
