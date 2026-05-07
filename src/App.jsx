@@ -706,7 +706,10 @@ function Dashboard({ onLogout }) {
 
         <nav style={{flex:1,padding:"20px 12px",display:"flex",flexDirection:"column",gap:4}}>
           {tabs.map(t=>(
-            <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{
+            <button key={t.id} onClick={()=>{
+              if(t.adminOnly && !isAdmin){ setShowAdminLogin(true); return; }
+              setActiveTab(t.id);
+            }} style={{
               display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
               borderRadius:10,border:"none",cursor:"pointer",textAlign:"right",
               background:activeTab===t.id?"rgba(212,175,55,0.15)":"transparent",
@@ -907,8 +910,19 @@ function Dashboard({ onLogout }) {
         )}
 
         {/* Reports */}
-        {activeTab==="reports" && isAdmin &&(
-          <ReportsPage bookings={bookings}/>
+        {activeTab==="reports" &&(
+          isAdmin
+            ? <ReportsPage bookings={bookings}/>
+            : <div style={{textAlign:"center",padding:60}}>
+                <div style={{fontSize:40,marginBottom:16}}>🔐</div>
+                <div style={{color:"rgba(255,255,255,0.4)",fontSize:14,marginBottom:20}}>هذه الصفحة للمدير فقط</div>
+                <button onClick={()=>setShowAdminLogin(true)} style={{
+                  padding:"10px 24px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
+                  border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",
+                  fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                  دخول كمدير
+                </button>
+              </div>
         )}
 
         {/* Services */}
