@@ -376,8 +376,7 @@ function ReportsPage({ bookings }) {
   const exportCSV = () => {
     const headers = ["الاسم","الخدمة","التاريخ","الوقت","السعر","الحالة","المصدر"];
     const rows = filtered.map(b=>[b.name,b.service,b.date,b.time,b.price,b.status==="confirmed"?"مكتمل":"ملغي",b.source==="whatsapp"?"واتساب":"يدوي"]);
-    const csv = [headers,...rows].map(r=>r.join(",")).join("
-");
+    const csv = [headers,...rows].map(r=>r.join(",")).join(String.fromCharCode(10));
     const blob = new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href=url; a.download="تقرير-لمسة.csv"; a.click();
