@@ -11,11 +11,7 @@ const SERVICES = [
 ];
 
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
-// حسابات المستخدمين — غيّر هنا
-const USERS = {
-  "مدير": { password: "admin2026", role: "admin" },
-  "موظفة": { password: "lamsa2026", role: "staff" },
-};
+// الحسابات تُجلب من السيرفر
 
 function SvgIcon({ d, size=18, color="currentColor" }) {
   return (
@@ -50,15 +46,29 @@ function LoginScreen({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
   const [shake,    setShake]    = useState(false);
+  const [loading,  setLoading]  = useState(false);
 
-  const handleLogin = () => {
-    const user = USERS[username.trim()];
-    if (user && user.password === password) {
-      onLogin(user.role);
-    } else {
-      setError(!username.trim() ? "أدخل اسم المستخدم" : !USERS[username.trim()] ? "اسم المستخدم غير صحيح" : "كلمة المرور غلط");
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+  const handleLogin = async () => {
+    if (!username.trim()) return setError("أدخل اسم المستخدم");
+    if (!password.trim()) return setError("أدخل كلمة المرور");
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL + "/api/login", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "خطأ في تسجيل الدخول");
+        setShake(true);
+        setTimeout(()=>setShake(false),500);
+      } else {
+        onLogin(data.role, data.username);
+      }
+    } catch {
+      setError("تعذر الاتصال بالسيرفر");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,12 +125,13 @@ function LoginScreen({ onLogin }) {
           {error && <div style={{color:"#f87171",fontSize:12}}>{error}</div>}
         </div>
 
-        <button onClick={handleLogin} style={{
+        <button onClick={handleLogin} disabled={loading} style={{
           width:"100%",padding:"12px",
-          background:"linear-gradient(135deg,#d4af37,#8b6914)",
+          background: loading ? "rgba(212,175,55,0.4)" : "linear-gradient(135deg,#d4af37,#8b6914)",
           border:"none",borderRadius:12,color:"#1a0a0f",
-          fontFamily:"inherit",fontSize:14,fontWeight:700,cursor:"pointer",
-        }}>دخول</button>
+          fontFamily:"inherit",fontSize:14,fontWeight:700,
+          cursor: loading ? "default" : "pointer",
+        }}>{loading ? "جاري التحقق..." : "دخول"}</button>
       </div>
     </div>
   );
@@ -239,12 +250,14 @@ function BookingRow({ b, onCancel }) {
 
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────
 export default function SalonDashboard() {
-  const [loggedIn, setLoggedIn] = useState(() => window.location.hash === "#authenticated");
-  const [userRole, setUserRole] = useState(() => window.location.hash.includes("admin") ? "admin" : "staff");
+  const [loggedIn,  setLoggedIn]  = useState(() => window.location.hash.startsWith("#auth"));
+  const [userRole,  setUserRole]  = useState(() => window.location.hash.includes("admin") ? "admin" : "staff");
+  const [username,  setUsername]  = useState(() => decodeURIComponent(window.location.hash.split("-")[2] || ""));
 
-  const handleLogin = (role) => {
-    window.location.hash = role === "admin" ? "#authenticated-admin" : "#authenticated";
+  const handleLogin = (role, uname) => {
+    window.location.hash = "#auth-" + role + "-" + encodeURIComponent(uname);
     setUserRole(role);
+    setUsername(uname);
     setLoggedIn(true);
   };
 
@@ -254,8 +267,7 @@ export default function SalonDashboard() {
   };
 
   if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
-
-  return <Dashboard onLogout={handleLogout} initialRole={userRole}/>;
+  return <Dashboard onLogout={handleLogout} initialRole={userRole} username={username}/>;
 }
 
 // ─── ADD BOOKING MODAL ───────────────────────────────────────────
@@ -357,7 +369,12 @@ function AdminLoginModal({ onClose, onSuccess }) {
             borderRadius:10,padding:"11px 14px",color:"#e8d5a3",fontSize:13,outline:"none",direction:"rtl",boxSizing:"border-box",marginBottom:error?4:12}}/>
         {error && <div style={{color:"#f87171",fontSize:12,marginBottom:10}}>كلمة المرور غلط</div>}
         <div style={{display:"flex",gap:10}}>
-          <button onClick={()=>{const u=USERS["مدير"];if(u&&u.password===pwd){onSuccess();onClose();}else setError(true);}} style={{
+          <button onClick={async ()=>{
+          try {
+            const res = await fetch(API_URL+"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:"مدير",password:pwd})});
+            if(res.ok){onSuccess();onClose();}else setError(true);
+          } catch { setError(true); }
+        }} style={{
             flex:1,padding:"10px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
             border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer"}}>دخول</button>
           <button onClick={onClose} style={{
@@ -582,7 +599,169 @@ function ReportsPage({ bookings }) {
   );
 }
 
-function Dashboard({ onLogout, initialRole }) {
+// ─── USERS MANAGEMENT PAGE ───────────────────────────────────────
+function UsersPage() {
+  const [users,   setUsers]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [form, setForm] = useState({ username:"", password:"", role:"staff" });
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(API_URL + "/api/users");
+      setUsers(await res.json());
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(()=>{ fetchUsers(); }, []);
+
+  const openAdd = () => { setForm({username:"",password:"",role:"staff"}); setEditUser(null); setFormError(""); setShowForm(true); };
+  const openEdit = (u) => { setForm({username:u.username,password:"",role:u.role}); setEditUser(u); setFormError(""); setShowForm(true); };
+
+  const handleSave = async () => {
+    if (!form.username.trim()) return setFormError("اسم المستخدم مطلوب");
+    if (!editUser && !form.password.trim()) return setFormError("كلمة المرور مطلوبة");
+    setSaving(true);
+    try {
+      const url = editUser ? API_URL+"/api/users/"+editUser.id : API_URL+"/api/users";
+      const method = editUser ? "PATCH" : "POST";
+      const res = await fetch(url, {method, headers:{"Content-Type":"application/json"}, body:JSON.stringify(form)});
+      const data = await res.json();
+      if (!res.ok) return setFormError(data.error || "حدث خطأ");
+      await fetchUsers();
+      setShowForm(false);
+    } catch { setFormError("تعذر الاتصال"); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async (u) => {
+    if (!window.confirm("هل تريد حذف " + u.username + "؟")) return;
+    await fetch(API_URL+"/api/users/"+u.id, {method:"DELETE"});
+    fetchUsers();
+  };
+
+  const inputStyle = { width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(212,175,55,0.2)",
+    borderRadius:10, padding:"10px 14px", color:"#e8d5a3", fontSize:13, outline:"none", direction:"rtl",
+    boxSizing:"border-box", fontFamily:"inherit" };
+
+  return (
+    <div style={{animation:"fadeUp .4s ease"}}>
+      {/* Header */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div style={{color:"rgba(255,255,255,0.5)",fontSize:13}}>{users.length} مستخدم</div>
+        <button onClick={openAdd} style={{
+          display:"flex",alignItems:"center",gap:6,padding:"9px 16px",
+          background:"linear-gradient(135deg,#d4af37,#8b6914)",
+          border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+          + إضافة مستخدم
+        </button>
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000,direction:"rtl"}}>
+          <div style={{background:"#1a0a0f",border:"1px solid rgba(212,175,55,0.3)",borderRadius:20,padding:"28px 32px",width:360,boxShadow:"0 20px 60px rgba(0,0,0,0.8)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <span style={{color:"#d4af37",fontWeight:700,fontSize:15}}>{editUser?"تعديل مستخدم":"إضافة مستخدم جديد"}</span>
+              <button onClick={()=>setShowForm(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <div>
+                <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>اسم المستخدم</div>
+                <input style={inputStyle} value={form.username} onChange={e=>setForm({...form,username:e.target.value})} placeholder="مثال: نورة"/>
+              </div>
+              <div>
+                <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>
+                  {editUser?"كلمة المرور الجديدة (اتركها فارغة للإبقاء على القديمة)":"كلمة المرور"}
+                </div>
+                <input type="password" style={inputStyle} value={form.password}
+                  onChange={e=>setForm({...form,password:e.target.value})}
+                  placeholder={editUser?"اتركها فارغة إذا ما تبي تغيرها":"أدخل كلمة المرور"}/>
+              </div>
+              <div>
+                <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:5}}>الصلاحية</div>
+                <select style={{...inputStyle,cursor:"pointer"}} value={form.role} onChange={e=>setForm({...form,role:e.target.value})}>
+                  <option value="staff">موظفة — بدون تقارير</option>
+                  <option value="admin">مدير — كامل الصلاحيات</option>
+                </select>
+              </div>
+              {formError && <div style={{color:"#f87171",fontSize:12}}>{formError}</div>}
+            </div>
+            <div style={{display:"flex",gap:10,marginTop:20}}>
+              <button onClick={handleSave} disabled={saving} style={{
+                flex:1,padding:"10px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
+                border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer",
+                opacity:saving?0.6:1}}>
+                {saving?"جاري الحفظ...":"حفظ"}
+              </button>
+              <button onClick={()=>setShowForm(false)} style={{
+                flex:1,padding:"10px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
+                borderRadius:10,color:"rgba(255,255,255,0.5)",fontFamily:"inherit",fontSize:13,cursor:"pointer"}}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Users Table */}
+      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",
+          padding:"12px 20px",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.03)"}}>
+          {["اسم المستخدم","الصلاحية","تاريخ الإضافة",""].map(h=>(
+            <div key={h} style={{color:"rgba(255,255,255,0.35)",fontSize:11,fontWeight:600}}>{h}</div>
+          ))}
+        </div>
+        {loading ? (
+          <div style={{padding:30,textAlign:"center",color:"rgba(255,255,255,0.25)",fontSize:13}}>جاري التحميل...</div>
+        ) : users.length===0 ? (
+          <div style={{padding:30,textAlign:"center",color:"rgba(255,255,255,0.25)",fontSize:13}}>لا يوجد مستخدمين</div>
+        ) : users.map(u=>(
+          <div key={u.id} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",
+            alignItems:"center",padding:"14px 20px",borderBottom:"1px solid rgba(255,255,255,0.05)",
+            transition:"background 0.15s"}}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.03)"}
+            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:34,height:34,borderRadius:"50%",
+                background:u.role==="admin"?"linear-gradient(135deg,#a78bfa,#7c3aed)":"linear-gradient(135deg,#d4af37,#8b6914)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff"}}>
+                {u.username[0]}
+              </div>
+              <span style={{color:"#e8d5a3",fontSize:13}}>{u.username}</span>
+            </div>
+            <span style={{
+              background:u.role==="admin"?"rgba(167,139,250,0.12)":"rgba(212,175,55,0.1)",
+              color:u.role==="admin"?"#a78bfa":"#d4af37",
+              fontSize:11,padding:"3px 10px",borderRadius:20,width:"fit-content"}}>
+              {u.role==="admin"?"مدير":"موظفة"}
+            </span>
+            <span style={{color:"rgba(255,255,255,0.35)",fontSize:12}}>
+              {new Date(u.created_at).toLocaleDateString("ar-SA")}
+            </span>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>openEdit(u)} style={{
+                background:"rgba(212,175,55,0.1)",border:"1px solid rgba(212,175,55,0.2)",
+                borderRadius:6,padding:"4px 10px",color:"#d4af37",fontSize:11,cursor:"pointer"}}>
+                تعديل
+              </button>
+              <button onClick={()=>handleDelete(u)} style={{
+                background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",
+                borderRadius:6,padding:"4px 10px",color:"#f87171",fontSize:11,cursor:"pointer"}}>
+                حذف
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ onLogout, initialRole, username }) {
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
@@ -675,7 +854,8 @@ function Dashboard({ onLogout, initialRole }) {
     {id:"overview", label:"نظرة عامة", ip:IC.grid},
     {id:"bookings", label:"الحجوزات",  ip:IC.calendar},
     {id:"services", label:"الخدمات",   ip:IC.scissors},
-    {id:"reports",  label:"التقارير",  ip:IC.trending, adminOnly:true},
+    {id:"reports",  label:"التقارير",    ip:IC.trending, adminOnly:true},
+    {id:"users",    label:"المستخدمين",  ip:IC.shield,   adminOnly:true},
   ];
 
   return (
@@ -820,9 +1000,16 @@ function Dashboard({ onLogout, initialRole }) {
               border:"none",borderRadius:10,color:"#1a0a0f",
               fontFamily:"inherit",fontSize:12,fontWeight:700,cursor:"pointer",
             }}>+ إضافة حجز</button>
-            <div style={{width:36,height:36,borderRadius:10,
-              background:"linear-gradient(135deg,#d4af37,#8b6914)",
-              display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>👩‍💼</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,
+              background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+              borderRadius:10,padding:"6px 12px"}}>
+              <div style={{width:28,height:28,borderRadius:"50%",
+                background:isAdmin?"linear-gradient(135deg,#a78bfa,#7c3aed)":"linear-gradient(135deg,#d4af37,#8b6914)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>
+                {username?.[0]||"م"}
+              </div>
+              <span style={{color:"#e8d5a3",fontSize:12}}>{username||"مستخدم"}</span>
+            </div>
           </div>
         </div>
 
@@ -936,6 +1123,10 @@ function Dashboard({ onLogout, initialRole }) {
         )}
 
         {/* Reports */}
+        {activeTab==="users" && isAdmin &&(
+          <UsersPage/>
+        )}
+
         {activeTab==="reports" &&(
           isAdmin
             ? <ReportsPage bookings={bookings}/>
