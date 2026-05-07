@@ -12,6 +12,7 @@ const SERVICES = [
 
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
 const PASSWORD = "lamsa2026";
+const ADMIN_PASSWORD = "admin2026"; // كلمة مرور المدير
 
 function SvgIcon({ d, size=18, color="currentColor" }) {
   return (
@@ -29,6 +30,10 @@ const IC = {
   check:    "M20 6 9 17 4 12",
   clock:    "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2",
   bell:     "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  trending: "M22 7 13.5 15.5l-5-5L2 17M22 7h-5M22 7v5",
+  download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
+  lock:     "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4",
+  shield:   "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
   refresh:  "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
   logout:   "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   search:   "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z",
@@ -307,6 +312,251 @@ function AddBookingModal({ onClose, onAdd }) {
   );
 }
 
+// ─── ADMIN LOGIN MODAL ───────────────────────────────────────────
+function AdminLoginModal({ onClose, onSuccess }) {
+  const [pwd, setPwd] = useState("");
+  const [error, setError] = useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000,direction:"rtl"}}>
+      <div style={{background:"#0d0508",border:"1px solid rgba(212,175,55,0.3)",borderRadius:20,padding:"28px 32px",width:340,boxShadow:"0 20px 60px rgba(0,0,0,0.8)"}}>
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:32,marginBottom:8}}>🔐</div>
+          <div style={{color:"#d4af37",fontWeight:700,fontSize:16}}>صلاحية المدير</div>
+          <div style={{color:"rgba(255,255,255,0.35)",fontSize:12,marginTop:4}}>أدخل كلمة مرور المدير للوصول للتقارير</div>
+        </div>
+        <input type="password" value={pwd} onChange={e=>{setPwd(e.target.value);setError(false);}}
+          onKeyDown={e=>e.key==="Enter"&&(pwd===ADMIN_PASSWORD?(onSuccess(),onClose()):setError(true))}
+          placeholder="كلمة مرور المدير"
+          style={{width:"100%",background:"rgba(255,255,255,0.05)",border:error?"1px solid rgba(239,68,68,0.6)":"1px solid rgba(212,175,55,0.2)",
+            borderRadius:10,padding:"11px 14px",color:"#e8d5a3",fontSize:13,outline:"none",direction:"rtl",boxSizing:"border-box",marginBottom:error?4:12}}/>
+        {error && <div style={{color:"#f87171",fontSize:12,marginBottom:10}}>كلمة المرور غلط</div>}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>pwd===ADMIN_PASSWORD?(onSuccess(),onClose()):setError(true)} style={{
+            flex:1,padding:"10px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
+            border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer"}}>دخول</button>
+          <button onClick={onClose} style={{
+            flex:1,padding:"10px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
+            borderRadius:10,color:"rgba(255,255,255,0.5)",fontFamily:"inherit",fontSize:13,cursor:"pointer"}}>إلغاء</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── REPORTS PAGE ─────────────────────────────────────────────────
+function ReportsPage({ bookings }) {
+  const [period, setPeriod] = useState("monthly");
+  const [exportType, setExportType] = useState(null);
+
+  const now = new Date();
+
+  // فلتر البيانات حسب الفترة
+  const filterByPeriod = (bList) => {
+    // بما إن بياناتنا تستخدم "اليوم" و"بكره"، نستخدم كل البيانات كمثال حقيقي
+    return bList;
+  };
+
+  const filtered = filterByPeriod(bookings);
+  const completed = filtered.filter(b=>b.status==="confirmed");
+  const cancelled = filtered.filter(b=>b.status==="cancelled");
+  const totalRevenue = completed.reduce((sum,b)=>sum+(parseInt((b.price||"0").replace(/[^\d]/g,""))||0),0);
+  const uniqueClients = new Set(completed.map(b=>b.phone||b.name)).size;
+
+  // إحصائيات الخدمات
+  const serviceStats = {};
+  completed.forEach(b=>{
+    if(!serviceStats[b.service]) serviceStats[b.service]={count:0,revenue:0};
+    serviceStats[b.service].count++;
+    serviceStats[b.service].revenue += parseInt((b.price||"0").replace(/[^\d]/g,""))||0;
+  });
+  const sortedServices = Object.entries(serviceStats).sort((a,b)=>b[1].count-a[1].count);
+  const maxCount = sortedServices[0]?.[1]?.count || 1;
+
+  // تصدير CSV (Excel)
+  const exportCSV = () => {
+    const headers = ["الاسم","الخدمة","التاريخ","الوقت","السعر","الحالة","المصدر"];
+    const rows = filtered.map(b=>[b.name,b.service,b.date,b.time,b.price,b.status==="confirmed"?"مكتمل":"ملغي",b.source==="whatsapp"?"واتساب":"يدوي"]);
+    const csv = [headers,...rows].map(r=>r.join(",")).join("
+");
+    const blob = new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download="تقرير-لمسة.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // تصدير PDF (print)
+  const exportPDF = () => window.print();
+
+  const cardStyle = (accent) => ({
+    background:"rgba(255,255,255,0.03)", border:"1px solid "+accent+"30",
+    borderRadius:14, padding:"18px 20px",
+  });
+
+  const periods = [{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}];
+
+  return (
+    <div style={{animation:"fadeUp .4s ease"}}>
+      {/* Header */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+        <div style={{display:"flex",gap:6,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:5}}>
+          {periods.map(p=>(
+            <button key={p.id} onClick={()=>setPeriod(p.id)} style={{
+              padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",
+              fontFamily:"inherit",fontSize:12,transition:"all 0.2s",
+              background:period===p.id?"rgba(212,175,55,0.2)":"transparent",
+              color:period===p.id?"#d4af37":"rgba(255,255,255,0.4)",
+              fontWeight:period===p.id?600:400}}>
+              {p.l}
+            </button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={exportCSV} style={{
+            display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+            background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",
+            borderRadius:10,color:"#4ade80",fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
+            <SvgIcon d={IC.download} size={14} color="#4ade80"/> تصدير Excel
+          </button>
+          <button onClick={exportPDF} style={{
+            display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+            background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",
+            borderRadius:10,color:"#f87171",fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
+            <SvgIcon d={IC.download} size={14} color="#f87171"/> تصدير PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
+        {[
+          {label:"إجمالي المواعيد",  value:filtered.length,               sub:"كل المواعيد",         accent:"#d4af37", icon:IC.calendar},
+          {label:"مواعيد مكتملة",    value:completed.length,              sub:completed.length+" موعد",  accent:"#4ade80", icon:IC.check},
+          {label:"مواعيد ملغية",     value:cancelled.length,              sub:cancelled.length+" موعد",  accent:"#f87171", icon:IC.alert},
+          {label:"إجمالي المبالغ",   value:totalRevenue.toLocaleString()+" ر", sub:"من المواعيد المكتملة", accent:"#a78bfa", icon:IC.trending},
+        ].map(s=>(
+          <div key={s.label} style={cardStyle(s.accent)}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginBottom:8}}>{s.label}</div>
+                <div style={{color:"#fff",fontSize:22,fontWeight:700}}>{s.value}</div>
+                <div style={{color:s.accent,fontSize:11,marginTop:4}}>{s.sub}</div>
+              </div>
+              <div style={{width:36,height:36,borderRadius:9,background:s.accent+"20",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <SvgIcon d={s.icon} color={s.accent} size={16}/>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:18,marginBottom:18}}>
+        {/* Services Chart */}
+        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px 20px"}}>
+          <div style={{color:"#fff",fontWeight:600,fontSize:14,marginBottom:16}}>📊 الخدمات الأكثر طلباً</div>
+          {sortedServices.length===0?(
+            <div style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:13,padding:20}}>لا توجد بيانات</div>
+          ):sortedServices.map(([name,stats])=>(
+            <div key={name} style={{marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                <span style={{color:"rgba(255,255,255,0.7)",fontSize:12}}>{name}</span>
+                <div style={{display:"flex",gap:12}}>
+                  <span style={{color:"#4ade80",fontSize:11}}>{stats.count} حجز</span>
+                  <span style={{color:"#a78bfa",fontSize:11}}>{stats.revenue.toLocaleString()} ر</span>
+                </div>
+              </div>
+              <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3}}>
+                <div style={{height:"100%",borderRadius:3,
+                  width:Math.round((stats.count/maxCount)*100)+"%",
+                  background:"linear-gradient(90deg,#d4af3799,#d4af37)",
+                  transition:"width 1s ease"}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Completion Rate */}
+        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px 20px"}}>
+          <div style={{color:"#fff",fontWeight:600,fontSize:14,marginBottom:16}}>📈 نسبة الإنجاز</div>
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            {[
+              {label:"معدل الإكمال",  value:filtered.length?Math.round((completed.length/filtered.length)*100):0, color:"#4ade80"},
+              {label:"معدل الإلغاء",  value:filtered.length?Math.round((cancelled.length/filtered.length)*100):0, color:"#f87171"},
+              {label:"العملاء الفريدين", value:uniqueClients, color:"#a78bfa", isNumber:true},
+            ].map(item=>(
+              <div key={item.label}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{color:"rgba(255,255,255,0.55)",fontSize:12}}>{item.label}</span>
+                  <span style={{color:item.color,fontWeight:700,fontSize:14}}>
+                    {item.isNumber ? item.value : item.value+"%"}
+                  </span>
+                </div>
+                {!item.isNumber&&(
+                  <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3}}>
+                    <div style={{height:"100%",borderRadius:3,width:item.value+"%",
+                      background:"linear-gradient(90deg,"+item.color+"80,"+item.color+")",
+                      transition:"width 1s ease"}}/>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Revenue Breakdown */}
+          <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+            <div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginBottom:10}}>تفاصيل المبالغ</div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:12}}>متوسط قيمة الحجز</span>
+              <span style={{color:"#d4af37",fontSize:13,fontWeight:600}}>
+                {completed.length?Math.round(totalRevenue/completed.length).toLocaleString():0} ر
+              </span>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between"}}>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:12}}>إجمالي المبالغ</span>
+              <span style={{color:"#d4af37",fontSize:13,fontWeight:600}}>{totalRevenue.toLocaleString()} ر</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Table */}
+      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,overflow:"hidden"}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{color:"#fff",fontWeight:600,fontSize:14}}>📋 جدول المواعيد التفصيلي</span>
+          <span style={{color:"rgba(255,255,255,0.35)",fontSize:12}}>{filtered.length} موعد</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",
+          padding:"10px 20px",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.03)"}}>
+          {["العميلة","الخدمة","التاريخ","المبلغ","الحالة"].map(h=>(
+            <div key={h} style={{color:"rgba(255,255,255,0.35)",fontSize:11,fontWeight:600}}>{h}</div>
+          ))}
+        </div>
+        <div style={{maxHeight:300,overflow:"auto"}}>
+          {filtered.length===0?(
+            <div style={{padding:30,textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:13}}>لا توجد بيانات</div>
+          ):filtered.map(b=>{
+            const s = b.status==="confirmed"
+              ? {label:"مكتمل",bg:"rgba(34,197,94,0.12)",color:"#4ade80"}
+              : {label:"ملغي",bg:"rgba(239,68,68,0.12)",color:"#f87171"};
+            return(
+              <div key={b.id} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",
+                padding:"12px 20px",borderBottom:"1px solid rgba(255,255,255,0.04)",
+                transition:"background 0.15s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div style={{color:"#e8d5a3",fontSize:13}}>{b.name}</div>
+                <div style={{color:"rgba(255,255,255,0.6)",fontSize:12}}>{b.service}</div>
+                <div style={{color:"rgba(255,255,255,0.5)",fontSize:12}}>{b.date} {b.time}</div>
+                <div style={{color:"#d4af37",fontSize:13,fontWeight:600}}>{b.price}</div>
+                <span style={{background:s.bg,color:s.color,fontSize:11,padding:"2px 10px",borderRadius:20,width:"fit-content"}}>{s.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({ onLogout }) {
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
@@ -317,6 +567,8 @@ function Dashboard({ onLogout }) {
   const [search,    setSearch]    = useState("");
   const [confirm,   setConfirm]   = useState(null);
   const [showAdd,   setShowAdd]   = useState(false);
+  const [isAdmin,   setIsAdmin]   = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   const addNotif = (msg, type="success") => {
     const id = Date.now();
@@ -395,9 +647,10 @@ function Dashboard({ onLogout }) {
     .filter(b=> !search || b.name?.includes(search) || b.service?.includes(search) || b.phone?.includes(search));
 
   const tabs = [
-    {id:"overview",label:"نظرة عامة",ip:IC.grid},
-    {id:"bookings",label:"الحجوزات", ip:IC.calendar},
-    {id:"services",label:"الخدمات",  ip:IC.scissors},
+    {id:"overview", label:"نظرة عامة", ip:IC.grid},
+    {id:"bookings", label:"الحجوزات",  ip:IC.calendar},
+    {id:"services", label:"الخدمات",   ip:IC.scissors},
+    {id:"reports",  label:"التقارير",  ip:IC.trending, adminOnly:true},
   ];
 
   return (
@@ -410,6 +663,9 @@ function Dashboard({ onLogout }) {
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:rgba(212,175,55,.25);border-radius:4px}
       `}</style>
+
+      {/* Admin Login Modal */}
+      {showAdminLogin && <AdminLoginModal onClose={()=>setShowAdminLogin(false)} onSuccess={()=>setIsAdmin(true)}/>}
 
       {/* Add Booking Modal */}
       {showAdd && <AddBookingModal onClose={()=>setShowAdd(false)} onAdd={handleAddBooking}/>}
@@ -461,6 +717,7 @@ function Dashboard({ onLogout }) {
               onMouseLeave={e=>{if(activeTab!==t.id)e.currentTarget.style.background="transparent"}}>
               <SvgIcon d={t.ip} size={16} color={activeTab===t.id?"#d4af37":"rgba(255,255,255,0.4)"}/>
               {t.label}
+              {t.adminOnly && !isAdmin && <SvgIcon d={IC.lock} size={12} color="rgba(255,255,255,0.3)"/>}
               {t.id==="bookings"&&pending.length>0&&(
                 <span style={{marginRight:"auto",background:"rgba(251,191,36,0.2)",color:"#fbbf24",fontSize:10,padding:"1px 6px",borderRadius:10}}>
                   {pending.length}
@@ -521,6 +778,14 @@ function Dashboard({ onLogout }) {
               <SvgIcon d={IC.bell} size={14}/>
               {pending.length} معلق
             </div>
+            {isAdmin && (
+              <div style={{display:"flex",alignItems:"center",gap:5,padding:"6px 12px",
+                background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.3)",
+                borderRadius:10,color:"#a78bfa",fontSize:11}}>
+                <SvgIcon d={IC.shield} size={12} color="#a78bfa"/>
+                وضع المدير
+              </div>
+            )}
             <button onClick={()=>setShowAdd(true)} style={{
               display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
               background:"linear-gradient(135deg,#d4af37,#8b6914)",
@@ -640,6 +905,11 @@ function Dashboard({ onLogout }) {
               ):filtered.map(b=><BookingRow key={b.id} b={b} onCancel={handleCancel}/>)}
             </div>
           </div>
+        )}
+
+        {/* Reports */}
+        {activeTab==="reports" && isAdmin &&(
+          <ReportsPage bookings={bookings}/>
         )}
 
         {/* Services */}
