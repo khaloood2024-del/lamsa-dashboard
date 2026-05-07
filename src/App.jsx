@@ -11,8 +11,11 @@ const SERVICES = [
 ];
 
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
-const PASSWORD = "lamsa2026";
-const ADMIN_PASSWORD = "admin2026"; // كلمة مرور المدير
+// حسابات المستخدمين — غيّر هنا
+const USERS = {
+  "مدير": { password: "admin2026", role: "admin" },
+  "موظفة": { password: "lamsa2026", role: "staff" },
+};
 
 function SvgIcon({ d, size=18, color="currentColor" }) {
   return (
@@ -43,26 +46,32 @@ const IC = {
 
 // ─── LOGIN ───────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
-  const [pwd, setPwd]     = useState("");
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
+  const [shake,    setShake]    = useState(false);
 
   const handleLogin = () => {
-    if (pwd === PASSWORD) {
-      onLogin();
+    const user = USERS[username.trim()];
+    if (user && user.password === password) {
+      onLogin(user.role);
     } else {
-      setError(true);
+      setError(!username.trim() ? "أدخل اسم المستخدم" : !USERS[username.trim()] ? "اسم المستخدم غير صحيح" : "كلمة المرور غلط");
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
   };
 
+  const inputStyle = (hasError) => ({
+    width:"100%", background:"rgba(255,255,255,0.05)",
+    border: hasError ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(212,175,55,0.2)",
+    borderRadius:12, padding:"12px 16px", color:"#e8d5a3",
+    fontSize:14, outline:"none", direction:"rtl", boxSizing:"border-box",
+    fontFamily:"inherit",
+  });
+
   return (
-    <div style={{
-      minHeight:"100vh", background:"#0d0508",
-      display:"flex", alignItems:"center", justifyContent:"center",
-      fontFamily:"'Noto Naskh Arabic',serif", direction:"rtl",
-    }}>
+    <div style={{minHeight:"100vh",background:"#0d0508",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Naskh Arabic',serif",direction:"rtl"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
         @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
@@ -70,37 +79,47 @@ function LoginScreen({ onLogin }) {
       `}</style>
       <div style={{
         background:"rgba(255,255,255,0.03)", border:"1px solid rgba(212,175,55,0.25)",
-        borderRadius:20, padding:"40px 36px", width:340,
+        borderRadius:20, padding:"40px 36px", width:360,
         boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
         animation: shake ? "shake 0.4s ease" : "fadeUp 0.4s ease",
       }}>
-        <div style={{textAlign:"center", marginBottom:32}}>
-          <div style={{
-            width:60, height:60, borderRadius:14, margin:"0 auto 14px",
+        <div style={{textAlign:"center", marginBottom:28}}>
+          <div style={{width:60,height:60,borderRadius:14,margin:"0 auto 14px",
             background:"linear-gradient(135deg,#d4af37,#8b6914)",
-            display:"flex", alignItems:"center", justifyContent:"center", fontSize:28,
-          }}>✨</div>
-          <div style={{color:"#d4af37", fontWeight:700, fontSize:20}}>لمسة</div>
-          <div style={{color:"rgba(255,255,255,0.35)", fontSize:13, marginTop:4}}>لوحة تحكم الصالون</div>
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>✨</div>
+          <div style={{color:"#d4af37",fontWeight:700,fontSize:20}}>لمسة</div>
+          <div style={{color:"rgba(255,255,255,0.35)",fontSize:13,marginTop:4}}>لوحة تحكم الصالون</div>
         </div>
-        <div style={{marginBottom:16}}>
-          <input type="password" value={pwd}
-            onChange={e=>{setPwd(e.target.value); setError(false);}}
-            onKeyDown={e=>e.key==="Enter"&&handleLogin()}
-            placeholder="كلمة المرور"
-            style={{
-              width:"100%", background:"rgba(255,255,255,0.05)",
-              border: error?"1px solid rgba(239,68,68,0.6)":"1px solid rgba(212,175,55,0.2)",
-              borderRadius:12, padding:"12px 16px", color:"#e8d5a3",
-              fontSize:14, outline:"none", direction:"rtl", boxSizing:"border-box",
-            }}/>
-          {error && <div style={{color:"#f87171", fontSize:12, marginTop:6}}>كلمة المرور غلط</div>}
+
+        <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:16}}>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:6}}>اسم المستخدم</div>
+            <input value={username}
+              onChange={e=>{setUsername(e.target.value);setError("");}}
+              onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+              placeholder="أدخل اسم المستخدم"
+              style={inputStyle(error && !USERS[username.trim()])}
+              onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"}
+              onBlur={e=>e.target.style.borderColor=error?"rgba(239,68,68,0.6)":"rgba(212,175,55,0.2)"}/>
+          </div>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:12,marginBottom:6}}>كلمة المرور</div>
+            <input type="password" value={password}
+              onChange={e=>{setPassword(e.target.value);setError("");}}
+              onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+              placeholder="أدخل كلمة المرور"
+              style={inputStyle(error && USERS[username.trim()] && USERS[username.trim()].password !== password)}
+              onFocus={e=>e.target.style.borderColor="rgba(212,175,55,0.5)"}
+              onBlur={e=>e.target.style.borderColor=error?"rgba(239,68,68,0.6)":"rgba(212,175,55,0.2)"}/>
+          </div>
+          {error && <div style={{color:"#f87171",fontSize:12}}>{error}</div>}
         </div>
+
         <button onClick={handleLogin} style={{
-          width:"100%", padding:"12px",
+          width:"100%",padding:"12px",
           background:"linear-gradient(135deg,#d4af37,#8b6914)",
-          border:"none", borderRadius:12, color:"#1a0a0f",
-          fontFamily:"inherit", fontSize:14, fontWeight:700, cursor:"pointer",
+          border:"none",borderRadius:12,color:"#1a0a0f",
+          fontFamily:"inherit",fontSize:14,fontWeight:700,cursor:"pointer",
         }}>دخول</button>
       </div>
     </div>
@@ -221,15 +240,22 @@ function BookingRow({ b, onCancel }) {
 // ─── MAIN DASHBOARD ──────────────────────────────────────────────
 export default function SalonDashboard() {
   const [loggedIn, setLoggedIn] = useState(() => window.location.hash === "#authenticated");
+  const [userRole, setUserRole] = useState(() => window.location.hash.includes("admin") ? "admin" : "staff");
 
-  const handleLogin = () => {
-    window.location.hash = "authenticated";
+  const handleLogin = (role) => {
+    window.location.hash = role === "admin" ? "#authenticated-admin" : "#authenticated";
+    setUserRole(role);
+    setLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    window.location.hash = "";
     window.location.reload();
   };
 
   if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
 
-  return <Dashboard onLogout={()=>{ window.location.hash = ""; window.location.reload(); }}/>;
+  return <Dashboard onLogout={handleLogout} initialRole={userRole}/>;
 }
 
 // ─── ADD BOOKING MODAL ───────────────────────────────────────────
@@ -331,7 +357,7 @@ function AdminLoginModal({ onClose, onSuccess }) {
             borderRadius:10,padding:"11px 14px",color:"#e8d5a3",fontSize:13,outline:"none",direction:"rtl",boxSizing:"border-box",marginBottom:error?4:12}}/>
         {error && <div style={{color:"#f87171",fontSize:12,marginBottom:10}}>كلمة المرور غلط</div>}
         <div style={{display:"flex",gap:10}}>
-          <button onClick={()=>pwd===ADMIN_PASSWORD?(onSuccess(),onClose()):setError(true)} style={{
+          <button onClick={()=>{const u=USERS["مدير"];if(u&&u.password===pwd){onSuccess();onClose();}else setError(true);}} style={{
             flex:1,padding:"10px",background:"linear-gradient(135deg,#d4af37,#8b6914)",
             border:"none",borderRadius:10,color:"#1a0a0f",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer"}}>دخول</button>
           <button onClick={onClose} style={{
@@ -556,7 +582,7 @@ function ReportsPage({ bookings }) {
   );
 }
 
-function Dashboard({ onLogout }) {
+function Dashboard({ onLogout, initialRole }) {
   const [bookings,  setBookings]  = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [filter,    setFilter]    = useState("all");
@@ -566,7 +592,7 @@ function Dashboard({ onLogout }) {
   const [search,    setSearch]    = useState("");
   const [confirm,   setConfirm]   = useState(null);
   const [showAdd,   setShowAdd]   = useState(false);
-  const [isAdmin,   setIsAdmin]   = useState(false);
+  const [isAdmin,   setIsAdmin]   = useState(() => initialRole === "admin");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   const addNotif = (msg, type="success") => {
