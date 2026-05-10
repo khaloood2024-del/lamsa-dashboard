@@ -3,69 +3,84 @@ import { useState, useEffect, useCallback } from "react";
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
 
 const SERVICES = [
-  { id:1, name:"باديكير وميديكير", duration:45,  price:80,  icon:"💅", color:"#E8869A" },
-  { id:2, name:"تلوين شعر",        duration:90,  price:250, icon:"🎨", color:"#C490D1" },
-  { id:3, name:"قص وتصفيف",        duration:60,  price:150, icon:"✂️", color:"#90C4D1" },
-  { id:4, name:"علاج بالأوزون",    duration:60,  price:200, icon:"🌿", color:"#90D1A8" },
-  { id:5, name:"مساج استرخاء",     duration:60,  price:180, icon:"🪷", color:"#D190A8" },
-  { id:6, name:"تنظيف بشرة",       duration:75,  price:220, icon:"✨", color:"#D4B86A" },
-  { id:7, name:"عروس كاملة",       duration:240, price:800, icon:"👰", color:"#C4A0D4" },
+  { id:1, name:"باديكير وميديكير", duration:45,  price:80,  icon:"💅", color:"#C44870" },
+  { id:2, name:"تلوين شعر",        duration:90,  price:250, icon:"🎨", color:"#9058B0" },
+  { id:3, name:"قص وتصفيف",        duration:60,  price:150, icon:"✂️", color:"#3A8AB0" },
+  { id:4, name:"علاج بالأوزون",    duration:60,  price:200, icon:"🌿", color:"#3A8A60" },
+  { id:5, name:"مساج استرخاء",     duration:60,  price:180, icon:"🪷", color:"#B04870" },
+  { id:6, name:"تنظيف بشرة",       duration:75,  price:220, icon:"✨", color:"#C8A050" },
+  { id:7, name:"عروس كاملة",       duration:240, price:800, icon:"👰", color:"#7858B0" },
 ];
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────
 const T = {
-  bg:        "#FFF8FA",
+  bg:        "#F7F3F5",
+  bgDeep:    "#F0EAEe",
   surface:   "#FFFFFF",
-  rose:      "#D4547A",
-  roseDark:  "#B03860",
-  roseLight: "#F9E4EC",
-  roseMid:   "#EDB8CB",
-  blush:     "#FDF0F5",
-  border:    "#F0DCE6",
-  text:      "#2A1520",
-  textSoft:  "#7A4560",
-  muted:     "#C090A8",
-  green:     "#5A8C6C",
-  red:       "#C45060",
-  amber:     "#C48040",
-  purple:    "#9068C0",
+  sidebarBg: "#1C0F18",
+  rose:      "#C44870",
+  roseDark:  "#9A3458",
+  roseLight: "#FAE8EF",
+  roseMid:   "#E0A0B8",
+  blush:     "#FDF2F6",
+  border:    "#EAD5E2",
+  borderSoft:"#F2E4EC",
+  text:      "#1A0E15",
+  textSoft:  "#6A3550",
+  muted:     "#A070888",
+  mutedClr:  "#A07088",
+  green:     "#2E7A52",
+  red:       "#B83A50",
+  amber:     "#B07828",
+  purple:    "#7048A8",
+  gold:      "#C8A050",
+  goldLight: "#F9F0DC",
 };
 
 const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   body { background:${T.bg}; }
-  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:${T.roseMid}; border-radius:4px; }
 
-  @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-  @keyframes pulse   { 0%,100%{opacity:.5} 50%{opacity:1} }
-  @keyframes shake   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-  @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-  @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+  @keyframes shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes pulse    { 0%,100%{opacity:.4} 50%{opacity:1} }
+  @keyframes shake    { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  @keyframes spin     { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes slideIn  { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes scaleIn  { from{transform:scale(.95);opacity:0} to{transform:scale(1);opacity:1} }
 
-  .fade-up  { animation:fadeUp  0.5s cubic-bezier(.22,.68,0,1.15) both; }
-  .fade-in  { animation:fadeIn  0.3s ease both; }
+  .fade-up   { animation:fadeUp  0.45s cubic-bezier(.22,.68,0,1.1) both; }
+  .fade-in   { animation:fadeIn  0.25s ease both; }
+  .scale-in  { animation:scaleIn 0.3s cubic-bezier(.22,.68,0,1.15) both; }
 
-  .btn-rose { transition:all 0.2s ease; }
-  .btn-rose:hover { transform:translateY(-2px); box-shadow:0 6px 20px ${T.rose}40; }
-  .btn-rose:active { transform:translateY(0); }
+  .btn-primary { transition:all 0.2s ease; }
+  .btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 24px ${T.rose}45 !important; }
+  .btn-primary:active:not(:disabled) { transform:translateY(0); }
 
   .btn-ghost { transition:all 0.2s ease; }
-  .btn-ghost:hover { background:${T.blush} !important; }
+  .btn-ghost:hover { background:${T.blush} !important; border-color:${T.roseMid} !important; }
 
-  .row-hover { transition:background 0.15s; }
+  .row-hover { transition:background 0.12s; cursor:default; }
   .row-hover:hover { background:${T.blush} !important; }
 
-  .card-lift { transition:all 0.25s ease; }
-  .card-lift:hover { transform:translateY(-3px); box-shadow:0 12px 32px ${T.rose}18 !important; }
+  .card-hover { transition:all 0.25s ease; }
+  .card-hover:hover { transform:translateY(-4px); box-shadow:0 16px 40px ${T.rose}15 !important; }
 
-  .nav-btn { transition:all 0.2s ease; border:none; cursor:pointer; }
-  .nav-btn:hover { background:${T.roseLight} !important; }
+  .nav-item { transition:all 0.18s ease; border:none; cursor:pointer; }
+  .nav-item:hover { background:rgba(255,255,255,0.07) !important; }
+  .nav-item-active { background:rgba(196,72,112,0.15) !important; }
 
-  input, select, button { font-family:'Noto Naskh Arabic',serif; }
+  .sidebar-link { transition:all 0.18s ease; }
+
+  input, select, button, textarea { font-family:'Noto Naskh Arabic',serif; }
+
+  .stat-bar { transition:width 1.2s cubic-bezier(.22,.68,0,1.05); }
 `;
 
 // ─── ICONS ────────────────────────────────────────────────────────────
@@ -96,18 +111,22 @@ const IC = {
   eye:     "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   eyeoff:  "M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22",
   heart:   "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
+  star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+  sparkle: "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z",
+  award:   "M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.21 13.89 7 23l5-3 5 3-1.21-9.12",
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────
 const Avatar = ({ name, role, size=36 }) => {
   const bg = role==="admin"
-    ? `linear-gradient(135deg,${T.purple},#6848A8)`
+    ? `linear-gradient(135deg,${T.purple},#5838A0)`
     : `linear-gradient(135deg,${T.rose},${T.roseDark})`;
   return (
     <div style={{ width:size, height:size, borderRadius:"50%", background:bg, flexShrink:0,
       display:"flex", alignItems:"center", justifyContent:"center",
       fontSize:size*0.38, fontWeight:700, color:"#fff",
-      boxShadow:`0 2px 8px ${role==="admin"?T.purple:T.rose}40` }}>
+      boxShadow:`0 2px 10px ${role==="admin"?T.purple:T.rose}50`,
+      letterSpacing:0 }}>
       {name?.[0] || "م"}
     </div>
   );
@@ -115,43 +134,48 @@ const Avatar = ({ name, role, size=36 }) => {
 
 const Chip = ({ label, type="default" }) => {
   const map = {
-    confirmed: { bg:"#EAF7EE", color:T.green,  border:"#B8DFC4" },
-    pending:   { bg:"#FEF6E8", color:T.amber,  border:"#F0D898" },
-    cancelled: { bg:"#FDEEEE", color:T.red,    border:"#F0C0C0" },
-    admin:     { bg:"#F2EDFB", color:T.purple, border:"#D0C0EC" },
-    staff:     { bg:T.roseLight, color:T.rose, border:T.roseMid },
-    default:   { bg:T.blush,  color:T.textSoft,border:T.border },
+    confirmed: { bg:"#EBF7F1", color:T.green,  border:"#B0DCC4", dot:"#2E7A52" },
+    pending:   { bg:"#FEF5E6", color:T.amber,  border:"#EDD090", dot:"#B07828" },
+    cancelled: { bg:"#FDEEED", color:T.red,    border:"#EFBBC0", dot:"#B83A50" },
+    admin:     { bg:"#F0EAFA", color:T.purple, border:"#CEBCE8", dot:"#7048A8" },
+    staff:     { bg:T.roseLight, color:T.rose, border:T.roseMid, dot:T.rose    },
+    default:   { bg:T.blush,  color:T.textSoft,border:T.border,  dot:T.mutedClr},
   };
   const s = map[type]||map.default;
   return (
     <span style={{ background:s.bg, color:s.color, border:`1px solid ${s.border}`,
-      fontSize:11, padding:"3px 11px", borderRadius:20, fontWeight:500, whiteSpace:"nowrap" }}>
+      fontSize:11, padding:"3px 10px 3px 8px", borderRadius:20, fontWeight:600,
+      whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:5 }}>
+      <span style={{ width:5, height:5, borderRadius:"50%", background:s.dot, flexShrink:0 }}/>
       {label}
     </span>
   );
 };
 
 const StatCard = ({ label, value, sub, icon, color, delay=0 }) => (
-  <div className="card-lift fade-up" style={{ animationDelay:`${delay}s`,
-    background:T.surface, borderRadius:18,
-    border:`1px solid ${T.border}`,
-    padding:"22px 20px",
-    boxShadow:`0 2px 12px ${T.rose}08`,
-    position:"relative", overflow:"hidden" }}>
-    <div style={{ position:"absolute", top:-20, left:-20, width:80, height:80,
-      borderRadius:"50%", background:`${color}10` }}/>
-    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", position:"relative" }}>
-      <div>
-        <div style={{ color:T.muted, fontSize:12, marginBottom:10, fontWeight:500 }}>{label}</div>
-        <div style={{ color:T.text, fontSize:28, fontWeight:700, lineHeight:1,
-          fontFamily:"'Cormorant Garamond',serif" }}>{value}</div>
-        {sub && <div style={{ color, fontSize:11, marginTop:6, fontWeight:500 }}>{sub}</div>}
-      </div>
-      <div style={{ width:44, height:44, borderRadius:14,
-        background:`linear-gradient(135deg,${color}20,${color}10)`,
-        border:`1px solid ${color}20`,
-        display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <Icon d={icon} color={color} size={18}/>
+  <div className="card-hover fade-up" style={{ animationDelay:`${delay}s`,
+    background:T.surface, borderRadius:20,
+    border:`1px solid ${T.borderSoft}`,
+    padding:"0",
+    boxShadow:`0 1px 8px rgba(0,0,0,0.06)`,
+    overflow:"hidden", position:"relative" }}>
+    <div style={{ height:3, background:`linear-gradient(90deg,${color},${color}80)` }}/>
+    <div style={{ padding:"20px 20px 18px" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+        <div style={{ flex:1 }}>
+          <div style={{ color:T.mutedClr, fontSize:11, marginBottom:10, fontWeight:600,
+            textTransform:"uppercase", letterSpacing:0.8 }}>{label}</div>
+          <div style={{ color:T.text, fontSize:30, fontWeight:700, lineHeight:1,
+            fontFamily:"'Playfair Display',serif" }}>{value}</div>
+          {sub && <div style={{ color, fontSize:11, marginTop:7, fontWeight:600 }}>{sub}</div>}
+        </div>
+        <div style={{ width:46, height:46, borderRadius:14,
+          background:`linear-gradient(145deg,${color}18,${color}08)`,
+          border:`1.5px solid ${color}22`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          flexShrink:0 }}>
+          <Icon d={icon} color={color} size={19} sw={1.75}/>
+        </div>
       </div>
     </div>
   </div>
@@ -160,20 +184,20 @@ const StatCard = ({ label, value, sub, icon, color, delay=0 }) => (
 // ─── MODAL WRAPPER ────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children, width=390 }) => (
   <div className="fade-in" style={{ position:"fixed", inset:0,
-    background:"rgba(42,21,32,0.35)", display:"flex",
+    background:"rgba(26,14,21,0.5)", display:"flex",
     alignItems:"center", justifyContent:"center",
-    zIndex:3000, direction:"rtl", backdropFilter:"blur(6px)" }}>
-    <div className="fade-up" style={{ background:T.surface, borderRadius:22,
-      padding:"28px", width, border:`1px solid ${T.border}`,
-      boxShadow:`0 24px 64px ${T.rose}20` }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
-        <span style={{ color:T.text, fontWeight:700, fontSize:16 }}>{title}</span>
+    zIndex:3000, direction:"rtl", backdropFilter:"blur(8px)" }}>
+    <div className="scale-in" style={{ background:T.surface, borderRadius:24,
+      padding:"30px", width, border:`1px solid ${T.borderSoft}`,
+      boxShadow:`0 32px 80px rgba(0,0,0,0.2), 0 0 0 1px ${T.border}` }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+        <span style={{ color:T.text, fontWeight:700, fontSize:16, letterSpacing:0.3 }}>{title}</span>
         <button onClick={onClose} style={{ background:"none", border:"none",
-          color:T.muted, cursor:"pointer", fontSize:20, lineHeight:1,
-          width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center",
-          borderRadius:"50%", transition:"background 0.2s" }}
-          onMouseEnter={e=>e.currentTarget.style.background=T.blush}
-          onMouseLeave={e=>e.currentTarget.style.background="none"}>✕</button>
+          color:T.mutedClr, cursor:"pointer", fontSize:18, lineHeight:1,
+          width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
+          borderRadius:"50%", transition:"all 0.2s" }}
+          onMouseEnter={e=>{ e.currentTarget.style.background=T.blush; e.currentTarget.style.color=T.rose; }}
+          onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=T.mutedClr; }}>✕</button>
       </div>
       {children}
     </div>
@@ -182,27 +206,29 @@ const Modal = ({ title, onClose, children, width=390 }) => (
 
 const Field = ({ label, children }) => (
   <div>
-    <div style={{ color:T.textSoft, fontSize:12, marginBottom:6, fontWeight:500 }}>{label}</div>
+    <div style={{ color:T.textSoft, fontSize:11.5, marginBottom:7, fontWeight:600,
+      textTransform:"uppercase", letterSpacing:0.6 }}>{label}</div>
     {children}
   </div>
 );
 
 const iStyle = (err=false) => ({
-  width:"100%", background: err?"#FDF0F2":T.blush,
-  border:`1px solid ${err?"#EAB0BC":T.border}`,
-  borderRadius:10, padding:"10px 14px", color:T.text, fontSize:13,
+  width:"100%", background: err?"#FDF0F3":T.blush,
+  border:`1.5px solid ${err?"#E8A8B4":T.border}`,
+  borderRadius:11, padding:"10px 14px", color:T.text, fontSize:13,
   outline:"none", direction:"rtl", boxSizing:"border-box", fontFamily:"inherit",
   transition:"all 0.2s",
 });
 
 const BtnPrimary = ({ onClick, children, disabled, full, style={} }) => (
-  <button onClick={onClick} disabled={disabled} className="btn-rose" style={{
+  <button onClick={onClick} disabled={disabled} className="btn-primary" style={{
     padding:"11px 22px",
     background: disabled ? T.roseMid : `linear-gradient(135deg,${T.rose},${T.roseDark})`,
     border:"none", borderRadius:12, color:"#fff", fontFamily:"inherit",
     fontSize:13, fontWeight:600, cursor: disabled?"default":"pointer",
     width: full?"100%":"auto",
-    boxShadow: disabled?"none":`0 4px 14px ${T.rose}40`, ...style }}>
+    boxShadow: disabled?"none":`0 4px 16px ${T.rose}45`,
+    letterSpacing:0.3, ...style }}>
     {children}
   </button>
 );
@@ -210,8 +236,9 @@ const BtnPrimary = ({ onClick, children, disabled, full, style={} }) => (
 const BtnGhost = ({ onClick, children, style={} }) => (
   <button onClick={onClick} className="btn-ghost" style={{
     padding:"11px 22px", background:T.blush,
-    border:`1px solid ${T.border}`, borderRadius:12,
-    color:T.textSoft, fontFamily:"inherit", fontSize:13, cursor:"pointer", ...style }}>
+    border:`1.5px solid ${T.border}`, borderRadius:12,
+    color:T.textSoft, fontFamily:"inherit", fontSize:13, cursor:"pointer",
+    transition:"all 0.2s", ...style }}>
     {children}
   </button>
 );
@@ -241,62 +268,82 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:T.bg, display:"flex",
-      alignItems:"center", justifyContent:"center",
+    <div style={{ minHeight:"100vh", background:`linear-gradient(145deg, #1A0E15 0%, #2C1520 50%, #1A0E15 100%)`,
+      display:"flex", alignItems:"center", justifyContent:"center",
       fontFamily:"'Noto Naskh Arabic',serif", direction:"rtl",
       position:"relative", overflow:"hidden" }}>
       <style>{GLOBAL_CSS}</style>
 
-      {/* Decorative blobs */}
-      <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
-        <div style={{ position:"absolute", top:"-15%", right:"-10%", width:500, height:500, borderRadius:"50%",
-          background:`radial-gradient(circle, ${T.roseMid}35 0%, transparent 65%)` }}/>
-        <div style={{ position:"absolute", bottom:"-10%", left:"-8%", width:400, height:400, borderRadius:"50%",
-          background:`radial-gradient(circle, ${T.roseMid}25 0%, transparent 65%)` }}/>
-        <div style={{ position:"absolute", top:"40%", left:"5%", width:200, height:200, borderRadius:"50%",
-          background:`radial-gradient(circle, ${T.roseLight}80 0%, transparent 70%)` }}/>
-        {/* Floating petals */}
-        {["20%","45%","70%","85%","30%"].map((l,i)=>(
-          <div key={i} style={{ position:"absolute", top:`${15+i*15}%`, left:l,
-            width:8+i*3, height:8+i*3, borderRadius:"50% 0 50% 0",
-            background:`${T.rose}${20+i*8}`,
-            animation:`float ${3+i*0.5}s ease-in-out infinite`,
-            animationDelay:`${i*0.4}s` }}/>
+      {/* Background pattern */}
+      <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:"-20%", right:"-15%", width:600, height:600, borderRadius:"50%",
+          background:`radial-gradient(circle, ${T.rose}20 0%, transparent 60%)` }}/>
+        <div style={{ position:"absolute", bottom:"-15%", left:"-10%", width:500, height:500, borderRadius:"50%",
+          background:`radial-gradient(circle, ${T.purple}15 0%, transparent 60%)` }}/>
+        <div style={{ position:"absolute", top:"30%", left:"10%", width:250, height:250, borderRadius:"50%",
+          background:`radial-gradient(circle, ${T.gold}10 0%, transparent 60%)` }}/>
+        {/* floating petals */}
+        {[{t:"15%",l:"20%",s:10,d:3.2},{t:"35%",l:"75%",s:7,d:2.8},{t:"55%",l:"12%",s:12,d:3.8},
+          {t:"72%",l:"60%",s:8,d:2.5},{t:"20%",l:"50%",s:6,d:4.1}].map((p,i)=>(
+          <div key={i} style={{ position:"absolute", top:p.t, left:p.l,
+            width:p.s, height:p.s, borderRadius:"50% 0 50% 0",
+            background:`${T.rose}${25+i*8}`,
+            animation:`float ${p.d}s ease-in-out infinite`,
+            animationDelay:`${i*0.5}s` }}/>
         ))}
+        {/* subtle grid lines */}
+        <div style={{ position:"absolute", inset:0,
+          backgroundImage:`linear-gradient(rgba(196,72,112,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(196,72,112,0.04) 1px, transparent 1px)`,
+          backgroundSize:"40px 40px" }}/>
       </div>
 
-      <div className="fade-up" style={{ width:400, position:"relative", zIndex:1 }}>
-        {/* Logo */}
-        <div style={{ textAlign:"center", marginBottom:32 }}>
-          <div style={{ position:"relative", display:"inline-block", marginBottom:16 }}>
-            <div style={{ width:72, height:72, borderRadius:22,
-              background:`linear-gradient(135deg,${T.rose},${T.roseDark})`,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:32, boxShadow:`0 12px 32px ${T.rose}50`,
-              animation:"float 4s ease-in-out infinite" }}>✨</div>
-            <div style={{ position:"absolute", inset:-4, borderRadius:26,
-              border:`2px solid ${T.roseMid}60`, animation:"float 4s ease-in-out infinite" }}/>
-          </div>
-          <div style={{ color:T.text, fontSize:30, fontWeight:700,
-            fontFamily:"'Cormorant Garamond',serif", letterSpacing:2 }}>لمسة</div>
-          <div style={{ color:T.muted, fontSize:13, marginTop:6, letterSpacing:0.5 }}>
-            لوحة تحكم الصالون
+      <div className="fade-up" style={{ width:420, position:"relative", zIndex:1 }}>
+        {/* Logo area */}
+        <div style={{ textAlign:"center", marginBottom:36 }}>
+          <div style={{ position:"relative", display:"inline-flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+            <div style={{ position:"relative" }}>
+              <div style={{ width:76, height:76, borderRadius:22,
+                background:`linear-gradient(145deg,${T.rose},${T.roseDark})`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:34, boxShadow:`0 20px 50px ${T.rose}60, 0 0 0 1px ${T.rose}30`,
+                animation:"float 4s ease-in-out infinite" }}>✨</div>
+              <div style={{ position:"absolute", inset:-6, borderRadius:28,
+                border:`1px solid ${T.rose}30`, animation:"float 4s ease-in-out infinite" }}/>
+            </div>
+            <div>
+              <div style={{ color:"#FFFFFF", fontSize:36, fontWeight:700,
+                fontFamily:"'Playfair Display',serif", letterSpacing:3, marginBottom:4 }}>لمسة</div>
+              <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, letterSpacing:2,
+                textTransform:"uppercase", fontFamily:"Inter,sans-serif" }}>
+                Salon & Spa Dashboard
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Card */}
-        <div style={{ background:T.surface, borderRadius:24, padding:"32px",
-          border:`1px solid ${T.border}`,
-          boxShadow:`0 16px 48px ${T.rose}15`,
-          animation: shake?"shake 0.4s ease":"none" }}>
+        <div style={{ background:"rgba(255,255,255,0.97)", borderRadius:26,
+          padding:"36px 32px",
+          border:`1px solid rgba(196,72,112,0.15)`,
+          boxShadow:`0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1)`,
+          animation: shake?"shake 0.4s ease":"none",
+          backdropFilter:"blur(20px)" }}>
 
-          <div style={{ display:"flex", flexDirection:"column", gap:16, marginBottom:22 }}>
+          <div style={{ marginBottom:8 }}>
+            <div style={{ color:T.text, fontSize:18, fontWeight:700,
+              fontFamily:"'Playfair Display',serif", marginBottom:4 }}>أهلاً بك</div>
+            <div style={{ color:T.mutedClr, fontSize:13 }}>سجّلي دخولك للمتابعة</div>
+          </div>
+
+          <div style={{ height:1, background:`linear-gradient(90deg, transparent, ${T.border}, transparent)`, margin:"18px 0 22px" }}/>
+
+          <div style={{ display:"flex", flexDirection:"column", gap:16, marginBottom:24 }}>
             <Field label="اسم المستخدم">
               <input value={username} onChange={e=>{setUsername(e.target.value);setError("");}}
                 onKeyDown={e=>e.key==="Enter"&&handle()}
                 placeholder="أدخلي اسم المستخدم"
                 style={iStyle(!!error&&!username)}
-                onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; e.target.style.boxShadow=`0 0 0 3px ${T.rose}15`; }}
+                onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; e.target.style.boxShadow=`0 0 0 3px ${T.rose}18`; }}
                 onBlur={e=>{ e.target.style.borderColor=T.border; e.target.style.background=T.blush; e.target.style.boxShadow="none"; }}/>
             </Field>
             <Field label="كلمة المرور">
@@ -306,31 +353,39 @@ function LoginScreen({ onLogin }) {
                   onKeyDown={e=>e.key==="Enter"&&handle()}
                   placeholder="أدخلي كلمة المرور"
                   style={{...iStyle(!!error&&username&&!password), paddingLeft:40}}
-                  onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; e.target.style.boxShadow=`0 0 0 3px ${T.rose}15`; }}
+                  onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; e.target.style.boxShadow=`0 0 0 3px ${T.rose}18`; }}
                   onBlur={e=>{ e.target.style.borderColor=T.border; e.target.style.background=T.blush; e.target.style.boxShadow="none"; }}/>
                 <button onClick={()=>setShowPwd(!showPwd)} style={{
                   position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
-                  background:"none", border:"none", cursor:"pointer", padding:0, color:T.muted }}>
-                  <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.muted}/>
+                  background:"none", border:"none", cursor:"pointer", padding:0, color:T.mutedClr }}>
+                  <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.mutedClr}/>
                 </button>
               </div>
             </Field>
             {error && (
-              <div style={{ color:T.red, fontSize:12, background:"#FDF0F2",
-                padding:"9px 14px", borderRadius:10, border:`1px solid #EAB0BC`,
-                display:"flex", alignItems:"center", gap:6 }}>
+              <div style={{ color:T.red, fontSize:12, background:"#FDF0F3",
+                padding:"10px 14px", borderRadius:11, border:`1.5px solid #EABAC0`,
+                display:"flex", alignItems:"center", gap:7 }}>
                 <Icon d={IC.warn} size={13} color={T.red}/> {error}
               </div>
             )}
           </div>
 
           <BtnPrimary onClick={handle} disabled={loading} full>
-            {loading ? "جاري التحقق..." : "✨ دخول"}
+            {loading ? (
+              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                <span style={{ width:14, height:14, border:"2px solid rgba(255,255,255,0.3)",
+                  borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.8s linear infinite",
+                  display:"inline-block" }}/>
+                جاري التحقق...
+              </span>
+            ) : "دخول إلى الداشبورد"}
           </BtnPrimary>
         </div>
 
-        <div style={{ textAlign:"center", marginTop:18, color:T.muted, fontSize:11, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-          <Icon d={IC.heart} size={11} color={T.roseMid}/>
+        <div style={{ textAlign:"center", marginTop:20, color:"rgba(255,255,255,0.3)", fontSize:11,
+          display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+          <Icon d={IC.heart} size={10} color={`${T.rose}80`}/>
           صالون لمسة © 2026
         </div>
       </div>
@@ -358,23 +413,24 @@ function AdminLoginModal({ onClose, onSuccess }) {
 
   return (
     <Modal title="🔐 دخول المدير" onClose={onClose} width={340}>
-      <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:18 }}>
+      <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:20 }}>
         <Field label="كلمة مرور المدير">
           <div style={{ position:"relative" }}>
             <input type={showPwd?"text":"password"} value={pwd}
               onChange={e=>{setPwd(e.target.value);setError(false);}}
               onKeyDown={e=>e.key==="Enter"&&handle()}
               placeholder="أدخل كلمة المرور" style={{...iStyle(error),paddingLeft:40}} autoFocus
-              onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; }}
-              onBlur={e=>{ e.target.style.borderColor=error?"#EAB0BC":T.border; e.target.style.background=T.blush; }}/>
+              onFocus={e=>{ e.target.style.borderColor=T.rose; e.target.style.background="#fff"; e.target.style.boxShadow=`0 0 0 3px ${T.rose}18`; }}
+              onBlur={e=>{ e.target.style.borderColor=error?"#E8A8B4":T.border; e.target.style.background=T.blush; e.target.style.boxShadow="none"; }}/>
             <button onClick={()=>setShowPwd(!showPwd)} style={{
               position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
               background:"none", border:"none", cursor:"pointer", padding:0 }}>
-              <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.muted}/>
+              <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.mutedClr}/>
             </button>
           </div>
         </Field>
-        {error && <div style={{ color:T.red, fontSize:12 }}>كلمة المرور غلط</div>}
+        {error && <div style={{ color:T.red, fontSize:12, display:"flex", alignItems:"center", gap:6 }}>
+          <Icon d={IC.warn} size={12} color={T.red}/> كلمة المرور غير صحيحة</div>}
       </div>
       <div style={{ display:"flex", gap:10 }}>
         <BtnPrimary onClick={handle} disabled={loading} style={{flex:1}}>{loading?"جاري...":"دخول"}</BtnPrimary>
@@ -388,13 +444,14 @@ function AdminLoginModal({ onClose, onSuccess }) {
 function ConfirmDialog({ message, onConfirm, onCancel }) {
   return (
     <Modal title="تأكيد الإلغاء" onClose={onCancel} width={320}>
-      <p style={{ color:T.textSoft, fontSize:13, marginBottom:20, lineHeight:1.8 }}>{message}</p>
+      <p style={{ color:T.textSoft, fontSize:13, marginBottom:22, lineHeight:1.9 }}>{message}</p>
       <div style={{ display:"flex", gap:10 }}>
-        <button onClick={onConfirm} className="btn-rose" style={{
-          flex:1, padding:"10px",
-          background:`linear-gradient(135deg,${T.red},#A03040)`,
-          border:"none", borderRadius:10, color:"#fff",
-          fontFamily:"inherit", fontSize:13, cursor:"pointer" }}>
+        <button onClick={onConfirm} className="btn-primary" style={{
+          flex:1, padding:"11px",
+          background:`linear-gradient(135deg,${T.red},#9A2838)`,
+          border:"none", borderRadius:11, color:"#fff",
+          fontFamily:"inherit", fontSize:13, fontWeight:600, cursor:"pointer",
+          boxShadow:`0 4px 14px ${T.red}40` }}>
           تأكيد الإلغاء
         </button>
         <BtnGhost onClick={onCancel} style={{flex:1}}>تراجع</BtnGhost>
@@ -408,11 +465,11 @@ function AddBookingModal({ onClose, onAdd }) {
   const PRICES = Object.fromEntries(SERVICES.map(s=>[s.name,s.price+" ريال"]));
   const [form,  setForm]  = useState({ name:"", service:SERVICES[0].name, date:"اليوم", time:"", phone:"" });
   const [error, setError] = useState("");
-  const fi = (f) => ({...iStyle(), onFocus:e=>{e.target.style.borderColor=T.rose;e.target.style.background="#fff";e.target.style.boxShadow=`0 0 0 3px ${T.rose}15`;}, onBlur:e=>{e.target.style.borderColor=T.border;e.target.style.background=T.blush;e.target.style.boxShadow="none";}});
+  const fi = () => ({ onFocus:e=>{e.target.style.borderColor=T.rose;e.target.style.background="#fff";e.target.style.boxShadow=`0 0 0 3px ${T.rose}18`;}, onBlur:e=>{e.target.style.borderColor=T.border;e.target.style.background=T.blush;e.target.style.boxShadow="none";} });
 
   return (
-    <Modal title="✨ إضافة حجز جديد" onClose={onClose} width={410}>
-      <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:18 }}>
+    <Modal title="✨ إضافة حجز جديد" onClose={onClose} width={420}>
+      <div style={{ display:"flex", flexDirection:"column", gap:15, marginBottom:20 }}>
         <Field label="اسم العميلة *">
           <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})}
             placeholder="مثال: نورة العتيبي" style={iStyle(!form.name&&!!error)} {...fi()}/>
@@ -423,14 +480,14 @@ function AddBookingModal({ onClose, onAdd }) {
         </Field>
         <Field label="الخدمة *">
           <select value={form.service} onChange={e=>setForm({...form,service:e.target.value})}
-            style={{...iStyle(),cursor:"pointer"}}>
+            style={{...iStyle(),cursor:"pointer"}} {...fi()}>
             {SERVICES.map(s=><option key={s.name} value={s.name}>{s.icon} {s.name} — {s.price} ريال</option>)}
           </select>
         </Field>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <Field label="التاريخ *">
             <select value={form.date} onChange={e=>setForm({...form,date:e.target.value})}
-              style={{...iStyle(),cursor:"pointer"}}>
+              style={{...iStyle(),cursor:"pointer"}} {...fi()}>
               <option>اليوم</option><option>بكره</option><option>بعد بكره</option>
             </select>
           </Field>
@@ -439,7 +496,8 @@ function AddBookingModal({ onClose, onAdd }) {
               placeholder="3:00 م" style={iStyle(!form.time&&!!error)} {...fi()}/>
           </Field>
         </div>
-        {error && <div style={{ color:T.red, fontSize:12 }}>{error}</div>}
+        {error && <div style={{ color:T.red, fontSize:12, display:"flex", alignItems:"center", gap:6 }}>
+          <Icon d={IC.warn} size={13} color={T.red}/>{error}</div>}
       </div>
       <div style={{ display:"flex", gap:10 }}>
         <BtnPrimary onClick={()=>{
@@ -464,26 +522,27 @@ function BookingRow({ b, onCancel }) {
   const s = sm[b.status]||sm.confirmed;
   const phone = b.phone?.replace("whatsapp:","") || "";
   return (
-    <div className="row-hover" style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1.2fr 0.8fr 0.8fr auto",
-      alignItems:"center", padding:"13px 20px", borderBottom:`1px solid ${T.border}`, background:T.surface }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+    <div className="row-hover" style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1.2fr 0.8fr 0.9fr auto",
+      alignItems:"center", padding:"14px 22px", borderBottom:`1px solid ${T.borderSoft}`, background:T.surface }}>
+      <div style={{ display:"flex", alignItems:"center", gap:11 }}>
         <Avatar name={b.name} role="staff" size={34}/>
         <div>
-          <div style={{ color:T.text, fontSize:13, fontWeight:500 }}>{b.name}</div>
-          {phone && <div style={{ color:T.muted, fontSize:11, display:"flex", alignItems:"center", gap:3, marginTop:1 }}>
-            <Icon d={IC.phone} size={10} color={T.muted}/>{phone}
+          <div style={{ color:T.text, fontSize:13, fontWeight:600 }}>{b.name}</div>
+          {phone && <div style={{ color:T.mutedClr, fontSize:11, display:"flex", alignItems:"center", gap:4, marginTop:2 }}>
+            <Icon d={IC.phone} size={10} color={T.mutedClr}/>{phone}
           </div>}
         </div>
       </div>
       <div style={{ color:T.textSoft, fontSize:13 }}>{b.service}</div>
-      <div style={{ color:T.muted, fontSize:12 }}>{b.date} — {b.time}</div>
-      <div style={{ color:T.rose, fontWeight:600, fontSize:13 }}>{b.price}</div>
+      <div style={{ color:T.mutedClr, fontSize:12 }}>{b.date} — {b.time}</div>
+      <div style={{ color:T.rose, fontWeight:700, fontSize:13, fontFamily:"'Playfair Display',serif" }}>{b.price}</div>
       <Chip label={s.label} type={s.type}/>
       <div>
         {b.status!=="cancelled"&&(
           <button onClick={()=>onCancel(b.id,b.name)} className="btn-ghost" style={{
-            background:"#FDEEEE", border:`1px solid #F0C0C0`, borderRadius:8,
-            padding:"4px 10px", color:T.red, fontSize:11, cursor:"pointer" }}>
+            background:"#FDF0F3", border:`1px solid #EABAC0`, borderRadius:8,
+            padding:"5px 12px", color:T.red, fontSize:11, cursor:"pointer",
+            fontFamily:"inherit", fontWeight:500, transition:"all 0.2s" }}>
             إلغاء
           </button>
         )}
@@ -513,7 +572,7 @@ function ReportsPage({ bookings }) {
     const r = bookings.map(b=>[b.name,b.service,b.date,b.time,b.price,b.status==="confirmed"?"مكتمل":"ملغي"]);
     const NL = String.fromCharCode(10);
     const csv=[h,...r].map(row=>row.join(",")).join(NL);
-    const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+    const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download="تقرير-لمسة.csv";a.click();
     URL.revokeObjectURL(url);
@@ -522,90 +581,101 @@ function ReportsPage({ bookings }) {
   return (
     <div className="fade-up">
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-        <div style={{ display:"flex", gap:4, background:T.surface, border:`1px solid ${T.border}`, borderRadius:12, padding:4 }}>
+        <div style={{ display:"flex", gap:3, background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:13, padding:4,
+          boxShadow:`0 1px 6px rgba(0,0,0,0.05)` }}>
           {[{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}].map(p=>(
             <button key={p.id} onClick={()=>setPeriod(p.id)} style={{
-              padding:"7px 16px", borderRadius:8, border:"none", cursor:"pointer",
-              fontFamily:"inherit", fontSize:12, transition:"all 0.2s",
+              padding:"7px 18px", borderRadius:9, border:"none", cursor:"pointer",
+              fontFamily:"inherit", fontSize:12, transition:"all 0.2s", fontWeight:500,
               background: period===p.id?`linear-gradient(135deg,${T.rose},${T.roseDark})`:"transparent",
-              color: period===p.id?"#fff":T.textSoft, fontWeight:period===p.id?600:400 }}>
+              color: period===p.id?"#fff":T.textSoft,
+              boxShadow: period===p.id?`0 2px 8px ${T.rose}40`:"none" }}>
               {p.l}
             </button>
           ))}
         </div>
         <div style={{ display:"flex", gap:8 }}>
-          <button onClick={exportCSV} className="btn-ghost" style={{
-            display:"flex", alignItems:"center", gap:6, padding:"8px 16px",
-            background:T.surface, border:`1px solid ${T.border}`, borderRadius:10,
-            color:T.green, fontFamily:"inherit", fontSize:12, cursor:"pointer" }}>
-            <Icon d={IC.dl} size={14} color={T.green}/> Excel
-          </button>
-          <button onClick={()=>window.print()} className="btn-ghost" style={{
-            display:"flex", alignItems:"center", gap:6, padding:"8px 16px",
-            background:T.surface, border:`1px solid ${T.border}`, borderRadius:10,
-            color:T.red, fontFamily:"inherit", fontSize:12, cursor:"pointer" }}>
-            <Icon d={IC.dl} size={14} color={T.red}/> PDF
-          </button>
+          {[{fn:exportCSV,c:T.green,l:"تصدير CSV"},{fn:()=>window.print(),c:T.purple,l:"طباعة PDF"}].map(btn=>(
+            <button key={btn.l} onClick={btn.fn} className="btn-ghost" style={{
+              display:"flex", alignItems:"center", gap:7, padding:"8px 16px",
+              background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:11,
+              color:btn.c, fontFamily:"inherit", fontSize:12, cursor:"pointer",
+              fontWeight:500, transition:"all 0.2s" }}>
+              <Icon d={IC.dl} size={14} color={btn.c}/> {btn.l}
+            </button>
+          ))}
         </div>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:22 }}>
-        <StatCard label="إجمالي المواعيد"  value={bookings.length}               sub="كل المواعيد"           icon={IC.cal}   color={T.rose}   delay={0}/>
-        <StatCard label="مواعيد مكتملة"    value={completed.length}              sub={completed.length+" موعد"}  icon={IC.ok}    color={T.green}  delay={.05}/>
-        <StatCard label="مواعيد ملغية"     value={cancelled.length}              sub={cancelled.length+" موعد"}  icon={IC.warn}  color={T.red}    delay={.1}/>
-        <StatCard label="إجمالي المبالغ"   value={totalRevenue.toLocaleString()+" ر"} sub="من المكتملة"        icon={IC.trend} color={T.purple} delay={.15}/>
+        <StatCard label="إجمالي المواعيد"  value={bookings.length}                    sub="كل المواعيد"       icon={IC.cal}   color={T.rose}   delay={0}/>
+        <StatCard label="مواعيد مكتملة"    value={completed.length}                   sub="موعد مؤكد"         icon={IC.ok}    color={T.green}  delay={.05}/>
+        <StatCard label="مواعيد ملغية"     value={cancelled.length}                   sub="موعد ملغي"         icon={IC.warn}  color={T.red}    delay={.1}/>
+        <StatCard label="إجمالي الإيرادات" value={totalRevenue.toLocaleString()+" ﷼"} sub="من المكتملة فقط"  icon={IC.trend} color={T.gold}   delay={.15}/>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr", gap:16, marginBottom:16 }}>
-        <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px" }}>
-          <div style={{ color:T.text, fontWeight:600, fontSize:14, marginBottom:18 }}>💎 الخدمات الأكثر طلباً</div>
-          {sorted.length===0 ? <div style={{ textAlign:"center",color:T.muted,fontSize:13,padding:20 }}>لا توجد بيانات</div>
-          : sorted.map(([name,stats])=>(
-            <div key={name} style={{ marginBottom:14 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                <span style={{ color:T.textSoft, fontSize:13 }}>{name}</span>
-                <div style={{ display:"flex", gap:12 }}>
-                  <span style={{ color:T.green, fontSize:11, fontWeight:500 }}>{stats.count} حجز</span>
-                  <span style={{ color:T.purple, fontSize:11, fontWeight:500 }}>{stats.revenue.toLocaleString()} ر</span>
+        {/* Top services */}
+        <div style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:18,
+          padding:"22px 26px", boxShadow:`0 1px 8px rgba(0,0,0,0.05)` }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:20 }}>
+            <Icon d={IC.star} size={15} color={T.gold} sw={2}/>
+            <span style={{ color:T.text, fontWeight:700, fontSize:14 }}>الخدمات الأكثر طلباً</span>
+          </div>
+          {sorted.length===0 ? <div style={{ textAlign:"center",color:T.mutedClr,fontSize:13,padding:20 }}>لا توجد بيانات</div>
+          : sorted.map(([name,stats],idx)=>(
+            <div key={name} style={{ marginBottom:16 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:7, alignItems:"center" }}>
+                <span style={{ color:T.textSoft, fontSize:13, fontWeight:500 }}>{name}</span>
+                <div style={{ display:"flex", gap:10 }}>
+                  <span style={{ color:T.green, fontSize:11, fontWeight:600,
+                    background:"#EBF7F1", padding:"2px 8px", borderRadius:8 }}>{stats.count} حجز</span>
+                  <span style={{ color:T.purple, fontSize:11, fontWeight:600,
+                    background:"#F0EAFA", padding:"2px 8px", borderRadius:8 }}>{stats.revenue.toLocaleString()} ﷼</span>
                 </div>
               </div>
-              <div style={{ height:6, background:T.blush, borderRadius:3 }}>
-                <div style={{ height:"100%", borderRadius:3,
+              <div style={{ height:7, background:T.bgDeep, borderRadius:4 }}>
+                <div className="stat-bar" style={{ height:"100%", borderRadius:4,
                   width:Math.round((stats.count/maxC)*100)+"%",
-                  background:`linear-gradient(90deg,${T.roseMid},${T.rose})`,
-                  transition:"width 1s ease" }}/>
+                  background:`linear-gradient(90deg,${T.roseMid},${T.rose})` }}/>
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px" }}>
-          <div style={{ color:T.text, fontWeight:600, fontSize:14, marginBottom:18 }}>📊 الإحصائيات</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+        {/* Stats */}
+        <div style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:18,
+          padding:"22px 26px", boxShadow:`0 1px 8px rgba(0,0,0,0.05)` }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:20 }}>
+            <Icon d={IC.trend} size={15} color={T.rose} sw={2}/>
+            <span style={{ color:T.text, fontWeight:700, fontSize:14 }}>الإحصائيات</span>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
             {[
               { label:"معدل الإكمال", value:bookings.length?Math.round((completed.length/bookings.length)*100):0, color:T.green },
               { label:"معدل الإلغاء", value:bookings.length?Math.round((cancelled.length/bookings.length)*100):0, color:T.red },
             ].map(item=>(
               <div key={item.label}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                  <span style={{ color:T.textSoft, fontSize:13 }}>{item.label}</span>
-                  <span style={{ color:item.color, fontWeight:600, fontSize:14 }}>{item.value}%</span>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:7 }}>
+                  <span style={{ color:T.textSoft, fontSize:13, fontWeight:500 }}>{item.label}</span>
+                  <span style={{ color:item.color, fontWeight:700, fontSize:15,
+                    fontFamily:"'Playfair Display',serif" }}>{item.value}%</span>
                 </div>
-                <div style={{ height:6, background:T.blush, borderRadius:3 }}>
-                  <div style={{ height:"100%", borderRadius:3, width:item.value+"%",
-                    background:`linear-gradient(90deg,${item.color}80,${item.color})`, transition:"width 1s ease" }}/>
+                <div style={{ height:7, background:T.bgDeep, borderRadius:4 }}>
+                  <div className="stat-bar" style={{ height:"100%", borderRadius:4, width:item.value+"%",
+                    background:`linear-gradient(90deg,${item.color}70,${item.color})` }}/>
                 </div>
               </div>
             ))}
-            <div style={{ paddingTop:14, borderTop:`1px solid ${T.border}` }}>
+            <div style={{ paddingTop:16, borderTop:`1px solid ${T.borderSoft}` }}>
               {[
-                { l:"العملاء الفريدين", v:uniqueClients, c:T.purple },
-                { l:"متوسط قيمة الحجز", v:(completed.length?Math.round(totalRevenue/completed.length):0).toLocaleString()+" ر", c:T.rose },
-                { l:"إجمالي المبالغ", v:totalRevenue.toLocaleString()+" ر", c:T.roseDark },
+                { l:"العملاء الفريدين",   v:uniqueClients, c:T.purple },
+                { l:"متوسط قيمة الحجز",  v:(completed.length?Math.round(totalRevenue/completed.length):0).toLocaleString()+" ﷼", c:T.rose },
+                { l:"إجمالي الإيرادات",  v:totalRevenue.toLocaleString()+" ﷼", c:T.gold },
               ].map(item=>(
-                <div key={item.l} style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
+                <div key={item.l} style={{ display:"flex", justifyContent:"space-between", marginBottom:12 }}>
                   <span style={{ color:T.textSoft, fontSize:13 }}>{item.l}</span>
-                  <span style={{ color:item.c, fontWeight:600 }}>{item.v}</span>
+                  <span style={{ color:item.c, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>{item.v}</span>
                 </div>
               ))}
             </div>
@@ -613,27 +683,32 @@ function ReportsPage({ bookings }) {
         </div>
       </div>
 
-      <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`,
-          display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <span style={{ color:T.text, fontWeight:600, fontSize:14 }}>جدول المواعيد التفصيلي</span>
-          <span style={{ color:T.muted, fontSize:12 }}>{bookings.length} موعد</span>
+      {/* Table */}
+      <div style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:18, overflow:"hidden",
+        boxShadow:`0 1px 8px rgba(0,0,0,0.05)` }}>
+        <div style={{ padding:"16px 22px", borderBottom:`1px solid ${T.borderSoft}`,
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          background:`linear-gradient(135deg,${T.blush},${T.surface})` }}>
+          <span style={{ color:T.text, fontWeight:700, fontSize:14 }}>جدول المواعيد التفصيلي</span>
+          <span style={{ color:T.mutedClr, fontSize:12, background:T.bgDeep,
+            padding:"3px 12px", borderRadius:20, fontWeight:500 }}>{bookings.length} موعد</span>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",
-          padding:"10px 20px", background:T.blush, borderBottom:`1px solid ${T.border}` }}>
+          padding:"10px 22px", background:T.bgDeep, borderBottom:`1px solid ${T.border}` }}>
           {["العميلة","الخدمة","التاريخ","المبلغ","الحالة"].map(h=>(
-            <div key={h} style={{ color:T.muted, fontSize:11, fontWeight:600 }}>{h}</div>
+            <div key={h} style={{ color:T.mutedClr, fontSize:11, fontWeight:700,
+              textTransform:"uppercase", letterSpacing:0.6 }}>{h}</div>
           ))}
         </div>
         <div style={{ maxHeight:280, overflow:"auto" }}>
-          {bookings.length===0 ? <div style={{ padding:30,textAlign:"center",color:T.muted,fontSize:13 }}>لا توجد بيانات</div>
+          {bookings.length===0 ? <div style={{ padding:32,textAlign:"center",color:T.mutedClr,fontSize:13 }}>لا توجد بيانات</div>
           : bookings.map(b=>(
             <div key={b.id} className="row-hover" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",
-              padding:"12px 20px", borderBottom:`1px solid ${T.border}80`, background:T.surface }}>
-              <div style={{ color:T.text, fontSize:13 }}>{b.name}</div>
+              padding:"13px 22px", borderBottom:`1px solid ${T.borderSoft}`, background:T.surface }}>
+              <div style={{ color:T.text, fontSize:13, fontWeight:500 }}>{b.name}</div>
               <div style={{ color:T.textSoft, fontSize:12 }}>{b.service}</div>
-              <div style={{ color:T.muted, fontSize:12 }}>{b.date} {b.time}</div>
-              <div style={{ color:T.rose, fontWeight:500, fontSize:13 }}>{b.price}</div>
+              <div style={{ color:T.mutedClr, fontSize:12 }}>{b.date} {b.time}</div>
+              <div style={{ color:T.rose, fontWeight:700, fontSize:13, fontFamily:"'Playfair Display',serif" }}>{b.price}</div>
               <Chip label={b.status==="confirmed"?"مكتمل":"ملغي"} type={b.status==="confirmed"?"confirmed":"cancelled"}/>
             </div>
           ))}
@@ -682,13 +757,13 @@ function UsersPage() {
     fetchUsers();
   };
 
-  const fi = { onFocus:e=>{e.target.style.borderColor=T.rose;e.target.style.background="#fff";e.target.style.boxShadow=`0 0 0 3px ${T.rose}15`;}, onBlur:e=>{e.target.style.borderColor=T.border;e.target.style.background=T.blush;e.target.style.boxShadow="none";} };
+  const fi = { onFocus:e=>{e.target.style.borderColor=T.rose;e.target.style.background="#fff";e.target.style.boxShadow=`0 0 0 3px ${T.rose}18`;}, onBlur:e=>{e.target.style.borderColor=T.border;e.target.style.background=T.blush;e.target.style.boxShadow="none";} };
 
   return (
     <div className="fade-up">
       {showForm && (
         <Modal title={editUser?"✏️ تعديل مستخدم":"✨ إضافة مستخدم"} onClose={()=>setShowForm(false)} width={380}>
-          <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:18 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:15, marginBottom:20 }}>
             <Field label="اسم المستخدم *">
               <input value={form.username} onChange={e=>setForm({...form,username:e.target.value})}
                 placeholder="مثال: نورة" style={iStyle(!!formErr&&!form.username)} {...fi}/>
@@ -702,7 +777,7 @@ function UsersPage() {
                 <button onClick={()=>setShowPwd(!showPwd)} style={{
                   position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",
                   background:"none",border:"none",cursor:"pointer",padding:0}}>
-                  <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.muted}/>
+                  <Icon d={showPwd?IC.eyeoff:IC.eye} size={15} color={T.mutedClr}/>
                 </button>
               </div>
             </Field>
@@ -713,7 +788,8 @@ function UsersPage() {
                 <option value="admin">مدير — كامل الصلاحيات</option>
               </select>
             </Field>
-            {formErr && <div style={{ color:T.red, fontSize:12 }}>{formErr}</div>}
+            {formErr && <div style={{ color:T.red, fontSize:12, display:"flex", alignItems:"center", gap:6 }}>
+              <Icon d={IC.warn} size={13} color={T.red}/>{formErr}</div>}
           </div>
           <div style={{ display:"flex", gap:10 }}>
             <BtnPrimary onClick={handleSave} disabled={saving} style={{flex:1}}>{saving?"جاري الحفظ...":"حفظ"}</BtnPrimary>
@@ -723,34 +799,48 @@ function UsersPage() {
       )}
 
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <span style={{ color:T.muted, fontSize:13 }}>{users.length} مستخدم</span>
-        <BtnPrimary onClick={openAdd}>+ إضافة مستخدم</BtnPrimary>
+        <div style={{ color:T.mutedClr, fontSize:13, display:"flex", alignItems:"center", gap:6 }}>
+          <Icon d={IC.shield} size={14} color={T.mutedClr}/>
+          {users.length} مستخدم مسجّل
+        </div>
+        <BtnPrimary onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:7, padding:"10px 18px" }}>
+          <Icon d={IC.plus} size={14} color="#fff" sw={2.5}/> إضافة مستخدم
+        </BtnPrimary>
       </div>
 
-      <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
+      <div style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:18, overflow:"hidden",
+        boxShadow:`0 1px 8px rgba(0,0,0,0.05)` }}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr auto",
-          padding:"12px 20px", background:T.blush, borderBottom:`1px solid ${T.border}` }}>
-          {["المستخدم","الصلاحية","تاريخ الإضافة",""].map(h=>(
-            <div key={h} style={{ color:T.muted, fontSize:11, fontWeight:600 }}>{h}</div>
+          padding:"11px 22px", background:T.bgDeep, borderBottom:`1px solid ${T.border}` }}>
+          {["المستخدم","الصلاحية","تاريخ الإضافة","الإجراءات"].map(h=>(
+            <div key={h} style={{ color:T.mutedClr, fontSize:11, fontWeight:700,
+              textTransform:"uppercase", letterSpacing:0.6 }}>{h}</div>
           ))}
         </div>
-        {loading ? <div style={{ padding:30,textAlign:"center",color:T.muted }}>جاري التحميل...</div>
-        : users.map(u=>(
+        {loading ? (
+          <div style={{ padding:40, textAlign:"center", color:T.mutedClr, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <span style={{ width:16, height:16, border:`2px solid ${T.border}`, borderTopColor:T.rose,
+              borderRadius:"50%", animation:"spin 0.8s linear infinite", display:"inline-block" }}/>
+            جاري التحميل...
+          </div>
+        ) : users.map(u=>(
           <div key={u.id} className="row-hover" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr auto",
-            alignItems:"center", padding:"13px 20px", borderBottom:`1px solid ${T.border}80`, background:T.surface }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <Avatar name={u.username} role={u.role} size={34}/>
-              <span style={{ color:T.text, fontSize:13, fontWeight:500 }}>{u.username}</span>
+            alignItems:"center", padding:"14px 22px", borderBottom:`1px solid ${T.borderSoft}`, background:T.surface }}>
+            <div style={{ display:"flex", alignItems:"center", gap:11 }}>
+              <Avatar name={u.username} role={u.role} size={36}/>
+              <span style={{ color:T.text, fontSize:13, fontWeight:600 }}>{u.username}</span>
             </div>
             <Chip label={u.role==="admin"?"مدير":"موظفة"} type={u.role==="admin"?"admin":"staff"}/>
-            <span style={{ color:T.muted, fontSize:12 }}>{new Date(u.created_at).toLocaleDateString("ar-SA")}</span>
+            <span style={{ color:T.mutedClr, fontSize:12 }}>{new Date(u.created_at).toLocaleDateString("ar-SA")}</span>
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={()=>openEdit(u)} className="btn-ghost" style={{
                 background:T.blush, border:`1px solid ${T.border}`, borderRadius:8,
-                padding:"4px 10px", color:T.rose, fontSize:11, cursor:"pointer" }}>تعديل</button>
+                padding:"5px 12px", color:T.rose, fontSize:11, cursor:"pointer",
+                fontFamily:"inherit", fontWeight:500 }}>تعديل</button>
               <button onClick={()=>handleDelete(u)} className="btn-ghost" style={{
-                background:"#FDEEEE", border:"1px solid #F0C0C0", borderRadius:8,
-                padding:"4px 10px", color:T.red, fontSize:11, cursor:"pointer" }}>حذف</button>
+                background:"#FDF0F3", border:"1px solid #EABAC0", borderRadius:8,
+                padding:"5px 12px", color:T.red, fontSize:11, cursor:"pointer",
+                fontFamily:"inherit", fontWeight:500 }}>حذف</button>
             </div>
           </div>
         ))}
@@ -834,6 +924,8 @@ function Dashboard({ onLogout, initialRole, username }) {
     {id:"users",    label:"المستخدمين", ip:IC.shield, adminOnly:true},
   ];
 
+  const pageLabels = { overview:"نظرة عامة", bookings:"إدارة الحجوزات", services:"قائمة الخدمات", reports:"التقارير والإحصاء", users:"إدارة المستخدمين" };
+
   return (
     <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Noto Naskh Arabic',serif", direction:"rtl", color:T.text }}>
       <style>{GLOBAL_CSS}</style>
@@ -842,197 +934,261 @@ function Dashboard({ onLogout, initialRole, username }) {
       {showAdd && <AddBookingModal onClose={()=>setShowAdd(false)} onAdd={handleAddBooking}/>}
       {confirm && <ConfirmDialog message={`هل تريدين إلغاء موعد ${confirm.name}؟`} onConfirm={confirmCancel} onCancel={()=>setConfirm(null)}/>}
 
-      {/* Notifications */}
-      <div style={{ position:"fixed", top:20, left:"50%", transform:"translateX(-50%)",
+      {/* Toast notifications */}
+      <div style={{ position:"fixed", top:24, left:"50%", transform:"translateX(-50%)",
         zIndex:2000, display:"flex", flexDirection:"column", gap:8, alignItems:"center", pointerEvents:"none" }}>
-        {notifs.map(n=>(
-          <div key={n.id} className="fade-up" style={{
-            background:T.surface, border:`1px solid ${n.type==="success"?T.green:n.type==="cancel"?T.red:T.rose}30`,
-            color:n.type==="success"?T.green:n.type==="cancel"?T.red:T.rose,
-            padding:"10px 20px", borderRadius:50, fontSize:13, whiteSpace:"nowrap",
-            boxShadow:`0 4px 16px ${T.rose}15` }}>
-            {n.msg}
-          </div>
-        ))}
+        {notifs.map(n=>{
+          const colors = { success:{bg:T.green,border:"#2E7A5230"}, cancel:{bg:T.red,border:"#B83A5030"}, default:{bg:T.rose,border:`${T.rose}30`} };
+          const c = colors[n.type]||colors.default;
+          return (
+            <div key={n.id} className="fade-up" style={{
+              background:T.surface, border:`1px solid ${c.border}`,
+              borderRight:`3px solid ${c.bg}`,
+              color:T.text, padding:"12px 20px", borderRadius:14, fontSize:13,
+              whiteSpace:"nowrap", boxShadow:`0 8px 24px rgba(0,0,0,0.12)`,
+              display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ width:7, height:7, borderRadius:"50%", background:c.bg, flexShrink:0 }}/>
+              {n.msg}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Sidebar */}
-      <div style={{ position:"fixed", top:0, right:0, height:"100vh", width:234,
-        background:T.surface, borderLeft:`1px solid ${T.border}`,
+      {/* ── Sidebar ─────────────────────────────────────────── */}
+      <div style={{ position:"fixed", top:0, right:0, height:"100vh", width:240,
+        background:T.sidebarBg,
         display:"flex", flexDirection:"column", zIndex:100,
-        boxShadow:`-4px 0 24px ${T.rose}08` }}>
+        boxShadow:`-2px 0 40px rgba(0,0,0,0.25)` }}>
 
-        {/* Logo */}
-        <div style={{ padding:"22px 18px 18px", borderBottom:`1px solid ${T.border}` }}>
+        {/* Brand */}
+        <div style={{ padding:"24px 18px 20px",
+          borderBottom:"1px solid rgba(255,255,255,0.07)",
+          background:`linear-gradient(180deg,rgba(196,72,112,0.12) 0%,transparent 100%)` }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div style={{ width:44, height:44, borderRadius:14,
-              background:`linear-gradient(135deg,${T.rose},${T.roseDark})`,
+            <div style={{ width:46, height:46, borderRadius:14,
+              background:`linear-gradient(145deg,${T.rose},${T.roseDark})`,
               display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:20, boxShadow:`0 6px 16px ${T.rose}40`,
-              animation:"float 4s ease-in-out infinite" }}>✨</div>
+              fontSize:21, boxShadow:`0 8px 20px ${T.rose}50`,
+              animation:"float 4s ease-in-out infinite", flexShrink:0 }}>✨</div>
             <div>
-              <div style={{ color:T.text, fontWeight:700, fontSize:19,
-                fontFamily:"'Cormorant Garamond',serif", letterSpacing:1 }}>لمسة</div>
-              <div style={{ color:T.muted, fontSize:11 }}>صالون وسبا</div>
+              <div style={{ color:"#FFFFFF", fontWeight:700, fontSize:20,
+                fontFamily:"'Playfair Display',serif", letterSpacing:1.5, lineHeight:1.1 }}>لمسة</div>
+              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, letterSpacing:1.5,
+                textTransform:"uppercase", fontFamily:"Inter,sans-serif", marginTop:3 }}>Salon & Spa</div>
             </div>
           </div>
         </div>
 
+        {/* Nav section label */}
+        <div style={{ padding:"18px 18px 8px" }}>
+          <div style={{ color:"rgba(255,255,255,0.25)", fontSize:10, fontWeight:700,
+            letterSpacing:1.5, textTransform:"uppercase", fontFamily:"Inter,sans-serif" }}>القائمة الرئيسية</div>
+        </div>
+
         {/* Nav */}
-        <nav style={{ flex:1, padding:"14px 10px", display:"flex", flexDirection:"column", gap:2 }}>
-          {tabs.map(t=>(
-            <button key={t.id} className="nav-btn" onClick={()=>{
-              if(t.adminOnly&&!isAdmin){ setShowAdminLogin(true); return; }
-              setActiveTab(t.id);
-            }} style={{
-              display:"flex", alignItems:"center", gap:10, padding:"10px 12px",
-              borderRadius:12, textAlign:"right",
-              background: activeTab===t.id?T.roseLight:"transparent",
-              color: activeTab===t.id?T.roseDark:T.textSoft,
-              fontFamily:"inherit", fontSize:13,
-              fontWeight: activeTab===t.id?600:400,
-              borderRight: `3px solid ${activeTab===t.id?T.rose:"transparent"}` }}>
-              <Icon d={t.ip} size={16} color={activeTab===t.id?T.rose:T.muted}/>
-              {t.label}
-              {t.adminOnly&&!isAdmin&&<Icon d={IC.lock} size={11} color={T.muted}/>}
-              {t.id==="bookings"&&pending.length>0&&(
-                <span style={{ marginRight:"auto", background:T.rose+"20", color:T.rose,
-                  fontSize:10, padding:"1px 7px", borderRadius:10, fontWeight:600 }}>{pending.length}</span>
-              )}
-            </button>
-          ))}
+        <nav style={{ flex:1, padding:"4px 10px 10px", display:"flex", flexDirection:"column", gap:2, overflow:"auto" }}>
+          {tabs.map(t=>{
+            const active = activeTab===t.id;
+            return (
+              <button key={t.id} className="nav-item" onClick={()=>{
+                if(t.adminOnly&&!isAdmin){ setShowAdminLogin(true); return; }
+                setActiveTab(t.id);
+              }} style={{
+                display:"flex", alignItems:"center", gap:11, padding:"11px 14px",
+                borderRadius:12, textAlign:"right", width:"100%",
+                background: active?"rgba(196,72,112,0.18)":"transparent",
+                color: active?"#FFFFFF":"rgba(255,255,255,0.5)",
+                fontFamily:"inherit", fontSize:13,
+                fontWeight: active?600:400 }}>
+                {active && <div style={{ position:"absolute", right:0, width:3, height:28,
+                  background:`linear-gradient(180deg,${T.rose},${T.roseDark})`,
+                  borderRadius:"2px 0 0 2px" }}/>}
+                <div style={{ width:32, height:32, borderRadius:9, flexShrink:0,
+                  background: active?`linear-gradient(145deg,${T.rose}30,${T.rose}15)`:"rgba(255,255,255,0.05)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  transition:"all 0.18s" }}>
+                  <Icon d={t.ip} size={15} color={active?T.rose:"rgba(255,255,255,0.4)"} sw={active?2:1.5}/>
+                </div>
+                <span style={{ flex:1 }}>{t.label}</span>
+                {t.adminOnly&&!isAdmin&&(
+                  <Icon d={IC.lock} size={11} color="rgba(255,255,255,0.2)"/>
+                )}
+                {t.id==="bookings"&&pending.length>0&&(
+                  <span style={{ background:T.rose, color:"#fff",
+                    fontSize:10, padding:"2px 7px", borderRadius:10, fontWeight:700,
+                    minWidth:20, textAlign:"center" }}>{pending.length}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* User */}
-        <div style={{ padding:"12px 10px", borderTop:`1px solid ${T.border}` }}>
+        {/* Bottom user section */}
+        <div style={{ padding:"12px 10px 16px",
+          borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+
+          {/* User card */}
           <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px",
-            background:T.blush, borderRadius:12, marginBottom:8,
-            border:`1px solid ${T.border}` }}>
-            <Avatar name={username} role={isAdmin?"admin":"staff"} size={32}/>
+            background:"rgba(255,255,255,0.05)", borderRadius:12, marginBottom:10,
+            border:"1px solid rgba(255,255,255,0.07)" }}>
+            <Avatar name={username} role={isAdmin?"admin":"staff"} size={34}/>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ color:T.text, fontSize:12, fontWeight:600,
+              <div style={{ color:"rgba(255,255,255,0.9)", fontSize:12, fontWeight:600,
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{username||"مستخدم"}</div>
-              <div style={{ color:T.muted, fontSize:11 }}>{isAdmin?"مدير":"موظفة"}</div>
+              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:1 }}>
+                {isAdmin?"مدير النظام":"موظفة"}</div>
             </div>
             {isAdmin && <Icon d={IC.shield} size={13} color={T.purple}/>}
           </div>
 
           <div style={{ display:"flex", gap:6 }}>
-            <button onClick={fetchBookings} disabled={syncing} className="btn-ghost" style={{
-              flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:5,
-              padding:"8px", background:T.blush, border:`1px solid ${T.border}`,
-              borderRadius:9, color:T.textSoft, fontFamily:"inherit", fontSize:11, cursor:"pointer" }}>
-              <Icon d={IC.refresh} size={13} color={T.muted}
+            <button onClick={fetchBookings} disabled={syncing} style={{
+              flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+              padding:"8px", background:"rgba(255,255,255,0.06)",
+              border:"1px solid rgba(255,255,255,0.08)",
+              borderRadius:9, color:"rgba(255,255,255,0.5)", fontFamily:"inherit",
+              fontSize:11, cursor:"pointer", transition:"all 0.18s" }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
+              <Icon d={IC.refresh} size={13} color="rgba(255,255,255,0.4)"
                 style={{ animation:syncing?"spin 1s linear infinite":"none" }}/>
               {syncing?"...":"تحديث"}
             </button>
-            <button onClick={onLogout} className="btn-ghost" style={{
-              flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:5,
-              padding:"8px", background:"#FDEEEE", border:"1px solid #F0C0C0",
-              borderRadius:9, color:T.red, fontFamily:"inherit", fontSize:11, cursor:"pointer" }}>
-              <Icon d={IC.out} size={13} color={T.red}/> خروج
+            <button onClick={onLogout} style={{
+              flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+              padding:"8px", background:`rgba(184,58,80,0.15)`,
+              border:"1px solid rgba(184,58,80,0.25)",
+              borderRadius:9, color:`${T.red}CC`, fontFamily:"inherit",
+              fontSize:11, cursor:"pointer", transition:"all 0.18s" }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(184,58,80,0.25)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(184,58,80,0.15)"}>
+              <Icon d={IC.out} size={13} color={`${T.red}CC`}/> خروج
             </button>
           </div>
 
           {lastSync && (
-            <div style={{ textAlign:"center", color:T.muted, fontSize:10, marginTop:8,
-              display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
-              <div style={{ width:5, height:5, borderRadius:"50%", background:T.green, animation:"pulse 2s infinite" }}/>
-              {lastSync.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}
+            <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", fontSize:10,
+              marginTop:10, display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+              <div style={{ width:5, height:5, borderRadius:"50%", background:T.green,
+                animation:"pulse 2s infinite" }}/>
+              آخر تحديث: {lastSync.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}
             </div>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ marginRight:234, padding:"26px 30px", minHeight:"100vh" }}>
+      {/* ── Main Content ─────────────────────────────────────── */}
+      <div style={{ marginRight:240, padding:"28px 32px", minHeight:"100vh" }}>
+
         {/* Topbar */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:26 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
           <div>
-            <h1 style={{ fontSize:22, fontWeight:700, color:T.text,
-              fontFamily:"'Cormorant Garamond',serif", letterSpacing:0.5 }}>
-              {tabs.find(t=>t.id===activeTab)?.label||"لوحة التحكم"}
+            <div style={{ color:T.mutedClr, fontSize:11, marginBottom:6, fontWeight:600,
+              textTransform:"uppercase", letterSpacing:1, display:"flex", alignItems:"center", gap:6 }}>
+              <span>لوحة التحكم</span>
+              <span style={{ color:T.border }}>›</span>
+              <span style={{ color:T.rose }}>{pageLabels[activeTab]||"لوحة التحكم"}</span>
+            </div>
+            <h1 style={{ fontSize:24, fontWeight:700, color:T.text,
+              fontFamily:"'Playfair Display',serif", letterSpacing:0.5, lineHeight:1.2 }}>
+              {pageLabels[activeTab]||"لوحة التحكم"}
             </h1>
-            <div style={{ color:T.muted, fontSize:12, marginTop:3 }}>
+            <div style={{ color:T.mutedClr, fontSize:12, marginTop:4 }}>
               {new Date().toLocaleDateString("ar-SA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
             </div>
           </div>
+
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             {isAdmin && (
-              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px",
-                background:"#F2EDFB", border:"1px solid #D0C0EC", borderRadius:10,
-                color:T.purple, fontSize:11, fontWeight:500 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px",
+                background:"#F0EAFA", border:"1px solid #CEBCE8", borderRadius:11,
+                color:T.purple, fontSize:11, fontWeight:600 }}>
                 <Icon d={IC.shield} size={12} color={T.purple}/> وضع المدير
               </div>
             )}
-            <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px",
-              background:T.blush, border:`1px solid ${T.border}`, borderRadius:10,
-              color:T.muted, fontSize:12 }}>
-              <Icon d={IC.bell} size={13} color={T.muted}/>{pending.length} معلق
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px",
+              background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:11,
+              color:T.mutedClr, fontSize:12, boxShadow:`0 1px 4px rgba(0,0,0,0.05)` }}>
+              <Icon d={IC.bell} size={13} color={T.mutedClr}/>
+              {pending.length > 0 ? (
+                <><span style={{ color:T.amber, fontWeight:600 }}>{pending.length}</span> معلق</>
+              ) : "لا يوجد معلق"}
             </div>
             <BtnPrimary onClick={()=>setShowAdd(true)} style={{
-              display:"flex", alignItems:"center", gap:6, padding:"9px 16px" }}>
-              <Icon d={IC.plus} size={14} color="#fff"/> إضافة حجز
+              display:"flex", alignItems:"center", gap:7, padding:"10px 18px" }}>
+              <Icon d={IC.plus} size={14} color="#fff" sw={2.5}/> إضافة حجز
             </BtnPrimary>
           </div>
         </div>
 
-        {/* OVERVIEW */}
+        {/* ── OVERVIEW ─────────────────────────────── */}
         {activeTab==="overview"&&(
           <div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:22 }}>
-              <StatCard label="حجوزات اليوم"  value={today.length}     sub={today.length+" موعد"}       icon={IC.cal}   color={T.rose}   delay={0}/>
-              <StatCard label="إجمالي مؤكدة"  value={confirmed.length} sub="مكتملة"                    icon={IC.ok}    color={T.green}  delay={.05}/>
-              <StatCard label="في الانتظار"   value={pending.length}   sub="تحتاج تأكيد"               icon={IC.clock} color={T.amber}  delay={.1}/>
-              <StatCard label="ملغية"          value={cancelled.length} sub="إجمالي الإلغاءات"          icon={IC.warn}  color={T.red}    delay={.15}/>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:24 }}>
+              <StatCard label="حجوزات اليوم"  value={today.length}     sub={`${today.length} موعد نشط`}     icon={IC.cal}   color={T.rose}   delay={0}/>
+              <StatCard label="مؤكدة"          value={confirmed.length} sub="إجمالي المكتملة"                icon={IC.ok}    color={T.green}  delay={.05}/>
+              <StatCard label="في الانتظار"   value={pending.length}   sub="تحتاج مراجعة"                  icon={IC.clock} color={T.amber}  delay={.1}/>
+              <StatCard label="ملغية"          value={cancelled.length} sub="إجمالي الإلغاءات"              icon={IC.warn}  color={T.red}    delay={.15}/>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr", gap:16 }}>
-              <div className="fade-up" style={{ background:T.surface, border:`1px solid ${T.border}`,
-                borderRadius:18, overflow:"hidden", boxShadow:`0 2px 12px ${T.rose}06`,
-                animationDelay:"0.2s" }}>
-                <div style={{ padding:"16px 20px", borderBottom:`1px solid ${T.border}`,
+
+            <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:16 }}>
+              {/* Today's bookings */}
+              <div className="fade-up" style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`,
+                borderRadius:20, overflow:"hidden",
+                boxShadow:`0 1px 8px rgba(0,0,0,0.05)`, animationDelay:"0.2s" }}>
+                <div style={{ padding:"17px 22px", borderBottom:`1px solid ${T.borderSoft}`,
                   display:"flex", justifyContent:"space-between", alignItems:"center",
                   background:`linear-gradient(135deg,${T.blush},${T.surface})` }}>
-                  <span style={{ color:T.text, fontWeight:600, fontSize:14 }}>💕 مواعيد اليوم</span>
-                  <Chip label={today.length+" موعد"} type="default"/>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <Icon d={IC.cal} size={15} color={T.rose} sw={2}/>
+                    <span style={{ color:T.text, fontWeight:700, fontSize:14 }}>مواعيد اليوم</span>
+                  </div>
+                  <Chip label={`${today.length} موعد`} type="default"/>
                 </div>
                 {today.length===0 ? (
-                  <div style={{ padding:40, textAlign:"center", color:T.muted, fontSize:13 }}>
-                    <div style={{ fontSize:36, marginBottom:8 }}>🌸</div>
-                    ما في مواعيد اليوم
+                  <div style={{ padding:48, textAlign:"center" }}>
+                    <div style={{ fontSize:40, marginBottom:10 }}>🌸</div>
+                    <div style={{ color:T.mutedClr, fontSize:13 }}>لا توجد مواعيد اليوم</div>
                   </div>
                 ) : today.map(b=>(
                   <div key={b.id} className="row-hover" style={{ display:"flex", alignItems:"center",
-                    gap:12, padding:"12px 20px", borderBottom:`1px solid ${T.border}80`, background:T.surface }}>
-                    <Avatar name={b.name} role="staff" size={34}/>
+                    gap:14, padding:"13px 22px", borderBottom:`1px solid ${T.borderSoft}`, background:T.surface }}>
+                    <Avatar name={b.name} role="staff" size={36}/>
                     <div style={{ flex:1 }}>
-                      <div style={{ color:T.text, fontSize:13, fontWeight:500 }}>{b.name}</div>
-                      <div style={{ color:T.muted, fontSize:11, marginTop:1 }}>{b.service}</div>
+                      <div style={{ color:T.text, fontSize:13, fontWeight:600 }}>{b.name}</div>
+                      <div style={{ color:T.mutedClr, fontSize:11, marginTop:2 }}>{b.service}</div>
                     </div>
                     <div style={{ textAlign:"left" }}>
-                      <div style={{ color:T.rose, fontSize:13, fontWeight:600 }}>{b.time}</div>
-                      <div style={{ color:T.muted, fontSize:11, marginTop:1 }}>{b.price}</div>
+                      <div style={{ color:T.rose, fontSize:14, fontWeight:700,
+                        fontFamily:"'Playfair Display',serif" }}>{b.time}</div>
+                      <div style={{ color:T.mutedClr, fontSize:11, marginTop:2 }}>{b.price}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="fade-up" style={{ background:T.surface, border:`1px solid ${T.border}`,
-                borderRadius:18, padding:"18px 20px", boxShadow:`0 2px 12px ${T.rose}06`,
-                animationDelay:"0.25s" }}>
-                <div style={{ color:T.text, fontWeight:600, fontSize:14, marginBottom:16 }}>💎 الخدمات الأكثر طلباً</div>
+              {/* Top services */}
+              <div className="fade-up" style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`,
+                borderRadius:20, padding:"20px 22px",
+                boxShadow:`0 1px 8px rgba(0,0,0,0.05)`, animationDelay:"0.25s" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:18 }}>
+                  <Icon d={IC.star} size={15} color={T.gold} sw={2}/>
+                  <span style={{ color:T.text, fontWeight:700, fontSize:14 }}>الخدمات الأكثر طلباً</span>
+                </div>
                 {SERVICES.slice(0,5).map(s=>{
                   const cnt=bookings.filter(b=>b.service===s.name).length;
                   const mx=Math.max(...SERVICES.map(sv=>bookings.filter(b=>b.service===sv.name).length),1);
                   return(
-                    <div key={s.id} style={{ marginBottom:12 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-                        <span style={{ color:T.textSoft, fontSize:12 }}>{s.icon} {s.name}</span>
-                        <span style={{ color:s.color, fontSize:12, fontWeight:500 }}>{cnt}</span>
+                    <div key={s.id} style={{ marginBottom:14 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6, alignItems:"center" }}>
+                        <span style={{ color:T.textSoft, fontSize:12, fontWeight:500 }}>{s.icon} {s.name}</span>
+                        <span style={{ color:s.color, fontSize:12, fontWeight:700,
+                          background:`${s.color}12`, padding:"1px 8px", borderRadius:8 }}>{cnt}</span>
                       </div>
-                      <div style={{ height:5, background:T.blush, borderRadius:3 }}>
-                        <div style={{ height:"100%", borderRadius:3, width:Math.round((cnt/mx)*100)||8+"%",
-                          background:`linear-gradient(90deg,${T.roseMid},${T.rose})`, transition:"width 1s ease" }}/>
+                      <div style={{ height:6, background:T.bgDeep, borderRadius:3 }}>
+                        <div className="stat-bar" style={{ height:"100%", borderRadius:3,
+                          width:(Math.round((cnt/mx)*100)||6)+"%",
+                          background:`linear-gradient(90deg,${T.roseMid},${T.rose})` }}/>
                       </div>
                     </div>
                   );
@@ -1042,74 +1198,91 @@ function Dashboard({ onLogout, initialRole, username }) {
           </div>
         )}
 
-        {/* BOOKINGS */}
+        {/* ── BOOKINGS ─────────────────────────────── */}
         {activeTab==="bookings"&&(
           <div className="fade-up">
-            <div style={{ display:"flex", gap:12, marginBottom:18, alignItems:"center" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, flex:1,
-                background:T.surface, border:`1px solid ${T.border}`, borderRadius:12, padding:"9px 14px",
-                boxShadow:`0 2px 8px ${T.rose}06` }}>
-                <Icon d={IC.search} size={15} color={T.muted}/>
+            <div style={{ display:"flex", gap:12, marginBottom:20, alignItems:"center" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, flex:1,
+                background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:13,
+                padding:"10px 16px", boxShadow:`0 1px 6px rgba(0,0,0,0.05)` }}>
+                <Icon d={IC.search} size={15} color={T.mutedClr}/>
                 <input value={search} onChange={e=>setSearch(e.target.value)}
                   placeholder="ابحثي بالاسم أو الخدمة..."
                   style={{ flex:1, background:"transparent", border:"none", color:T.text,
                     fontSize:13, outline:"none", direction:"rtl", fontFamily:"inherit" }}/>
               </div>
-              <div style={{ display:"flex", gap:4, background:T.surface, border:`1px solid ${T.border}`,
-                borderRadius:12, padding:4 }}>
+              <div style={{ display:"flex", gap:3, background:T.surface, border:`1.5px solid ${T.border}`,
+                borderRadius:13, padding:4, boxShadow:`0 1px 6px rgba(0,0,0,0.05)` }}>
                 {[{id:"all",l:"الكل"},{id:"confirmed",l:"مكتملة"},{id:"pending",l:"معلقة"},{id:"cancelled",l:"ملغية"}].map(f=>(
                   <button key={f.id} onClick={()=>setFilter(f.id)} style={{
-                    padding:"6px 14px", borderRadius:8, border:"none", cursor:"pointer",
-                    fontFamily:"inherit", fontSize:12, transition:"all 0.2s",
+                    padding:"7px 15px", borderRadius:9, border:"none", cursor:"pointer",
+                    fontFamily:"inherit", fontSize:12, transition:"all 0.2s", fontWeight:500,
                     background: filter===f.id?`linear-gradient(135deg,${T.rose},${T.roseDark})`:"transparent",
-                    color: filter===f.id?"#fff":T.textSoft, fontWeight:filter===f.id?600:400 }}>
+                    color: filter===f.id?"#fff":T.textSoft,
+                    boxShadow: filter===f.id?`0 2px 8px ${T.rose}40`:"none" }}>
                     {f.l}
-                    {f.id!=="all"&&<span style={{ opacity:.7, fontSize:10, marginRight:3 }}>
+                    {f.id!=="all"&&<span style={{ opacity:.7, fontSize:10, marginRight:4 }}>
                       ({bookings.filter(b=>b.status===f.id).length})
                     </span>}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:18, overflow:"hidden",
-              boxShadow:`0 2px 12px ${T.rose}06` }}>
-              <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1.2fr 0.8fr 0.8fr auto",
-                padding:"12px 20px", background:T.blush, borderBottom:`1px solid ${T.border}` }}>
+
+            <div style={{ background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:20, overflow:"hidden",
+              boxShadow:`0 1px 8px rgba(0,0,0,0.05)` }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1.2fr 0.8fr 0.9fr auto",
+                padding:"11px 22px", background:T.bgDeep, borderBottom:`1px solid ${T.border}` }}>
                 {["العميلة","الخدمة","الموعد","السعر","الحالة",""].map(h=>(
-                  <div key={h} style={{ color:T.muted, fontSize:11, fontWeight:600 }}>{h}</div>
+                  <div key={h} style={{ color:T.mutedClr, fontSize:11, fontWeight:700,
+                    textTransform:"uppercase", letterSpacing:0.6 }}>{h}</div>
                 ))}
               </div>
               {filtered.length===0 ? (
-                <div style={{ padding:40, textAlign:"center", color:T.muted, fontSize:13 }}>
-                  <div style={{ fontSize:32, marginBottom:8 }}>🌸</div>ما في حجوزات
+                <div style={{ padding:48, textAlign:"center" }}>
+                  <div style={{ fontSize:36, marginBottom:10 }}>🌸</div>
+                  <div style={{ color:T.mutedClr, fontSize:13 }}>لا توجد حجوزات مطابقة</div>
                 </div>
               ) : filtered.map(b=><BookingRow key={b.id} b={b} onCancel={handleCancel}/>)}
             </div>
           </div>
         )}
 
-        {/* SERVICES */}
+        {/* ── SERVICES ─────────────────────────────── */}
         {activeTab==="services"&&(
-          <div className="fade-up" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14 }}>
+          <div className="fade-up" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16 }}>
             {SERVICES.map((s,i)=>{
               const cnt=bookings.filter(b=>b.service===s.name&&b.status==="confirmed").length;
+              const revenue=bookings.filter(b=>b.service===s.name&&b.status==="confirmed")
+                .reduce((sum,b)=>sum+(parseInt((b.price||"0").replace(/\D/g,""))||0),0);
               return(
-                <div key={s.id} className="card-lift fade-up" style={{
-                  background:T.surface, border:`1px solid ${T.border}`, borderRadius:18,
-                  padding:20, boxShadow:`0 2px 12px ${T.rose}06`,
+                <div key={s.id} className="card-hover fade-up" style={{
+                  background:T.surface, border:`1.5px solid ${T.borderSoft}`, borderRadius:20,
+                  overflow:"hidden", boxShadow:`0 1px 8px rgba(0,0,0,0.05)`,
                   animationDelay:i*0.05+"s" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
-                    <div style={{ width:50, height:50, borderRadius:16, fontSize:24,
-                      background:`linear-gradient(135deg,${s.color}25,${s.color}10)`,
-                      border:`1px solid ${s.color}30`,
-                      display:"flex", alignItems:"center", justifyContent:"center" }}>{s.icon}</div>
-                    <Chip label={cnt+" حجز"} type="default"/>
-                  </div>
-                  <div style={{ color:T.text, fontWeight:600, fontSize:14, marginBottom:4 }}>{s.name}</div>
-                  <div style={{ color:T.muted, fontSize:12, marginBottom:14 }}>{s.duration} دقيقة</div>
-                  <div style={{ paddingTop:12, borderTop:`1px solid ${T.border}` }}>
-                    <span style={{ color:T.rose, fontWeight:700, fontSize:16,
-                      fontFamily:"'Cormorant Garamond',serif" }}>{s.price} ريال</span>
+                  <div style={{ height:3, background:`linear-gradient(90deg,${s.color},${s.color}70)` }}/>
+                  <div style={{ padding:"20px" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+                      <div style={{ width:52, height:52, borderRadius:16, fontSize:24,
+                        background:`linear-gradient(145deg,${s.color}20,${s.color}08)`,
+                        border:`1.5px solid ${s.color}25`,
+                        display:"flex", alignItems:"center", justifyContent:"center" }}>{s.icon}</div>
+                      <Chip label={cnt+" حجز"} type="default"/>
+                    </div>
+                    <div style={{ color:T.text, fontWeight:700, fontSize:14, marginBottom:4 }}>{s.name}</div>
+                    <div style={{ color:T.mutedClr, fontSize:12, marginBottom:16 }}>
+                      <Icon d={IC.clock} size={11} color={T.mutedClr} style={{ display:"inline", marginLeft:4 }}/>
+                      {s.duration} دقيقة
+                    </div>
+                    <div style={{ paddingTop:14, borderTop:`1px solid ${T.borderSoft}`,
+                      display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <span style={{ color:T.rose, fontWeight:700, fontSize:18,
+                        fontFamily:"'Playfair Display',serif" }}>{s.price} ﷼</span>
+                      {revenue > 0 && <span style={{ color:T.gold, fontSize:11, fontWeight:600,
+                        background:T.goldLight, padding:"3px 10px", borderRadius:8 }}>
+                        {revenue.toLocaleString()} ﷼ إيراد
+                      </span>}
+                    </div>
                   </div>
                 </div>
               );
@@ -1117,23 +1290,29 @@ function Dashboard({ onLogout, initialRole, username }) {
           </div>
         )}
 
-        {/* REPORTS */}
+        {/* ── REPORTS ──────────────────────────────── */}
         {activeTab==="reports"&&(
           isAdmin ? <ReportsPage bookings={bookings}/> : (
-            <div style={{ textAlign:"center", padding:60 }}>
-              <div style={{ fontSize:52, marginBottom:16 }}>🔐</div>
-              <div style={{ color:T.muted, fontSize:14, marginBottom:20 }}>هذه الصفحة للمدير فقط</div>
+            <div style={{ textAlign:"center", padding:80 }}>
+              <div style={{ width:80, height:80, borderRadius:24, background:T.blush,
+                border:`2px solid ${T.border}`, display:"flex", alignItems:"center",
+                justifyContent:"center", fontSize:36, margin:"0 auto 20px" }}>🔐</div>
+              <div style={{ color:T.textSoft, fontSize:15, fontWeight:600, marginBottom:8 }}>صفحة مخصصة للمدير</div>
+              <div style={{ color:T.mutedClr, fontSize:13, marginBottom:24 }}>تحتاج إلى صلاحيات المدير للوصول</div>
               <BtnPrimary onClick={()=>setShowAdminLogin(true)}>دخول كمدير</BtnPrimary>
             </div>
           )
         )}
 
-        {/* USERS */}
+        {/* ── USERS ────────────────────────────────── */}
         {activeTab==="users"&&(
           isAdmin ? <UsersPage/> : (
-            <div style={{ textAlign:"center", padding:60 }}>
-              <div style={{ fontSize:52, marginBottom:16 }}>🔐</div>
-              <div style={{ color:T.muted, fontSize:14, marginBottom:20 }}>هذه الصفحة للمدير فقط</div>
+            <div style={{ textAlign:"center", padding:80 }}>
+              <div style={{ width:80, height:80, borderRadius:24, background:T.blush,
+                border:`2px solid ${T.border}`, display:"flex", alignItems:"center",
+                justifyContent:"center", fontSize:36, margin:"0 auto 20px" }}>🔐</div>
+              <div style={{ color:T.textSoft, fontSize:15, fontWeight:600, marginBottom:8 }}>صفحة مخصصة للمدير</div>
+              <div style={{ color:T.mutedClr, fontSize:13, marginBottom:24 }}>تحتاج إلى صلاحيات المدير للوصول</div>
               <BtnPrimary onClick={()=>setShowAdminLogin(true)}>دخول كمدير</BtnPrimary>
             </div>
           )
