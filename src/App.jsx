@@ -56,31 +56,48 @@ const GLOBAL_CSS = `
   @keyframes scaleIn  { from{transform:scale(.95);opacity:0} to{transform:scale(1);opacity:1} }
 
   .fade-up   { animation:fadeUp  0.45s cubic-bezier(.22,.68,0,1.1) both; }
-  .fade-in   { animation:fadeIn  0.25s ease both; }
-  .scale-in  { animation:scaleIn 0.3s cubic-bezier(.22,.68,0,1.15) both; }
+  .fade-in   { animation:fadeIn  0.25s cubic-bezier(0.23,1,0.32,1) both; }
+  .scale-in  { animation:scaleIn 0.28s cubic-bezier(0.23,1,0.32,1) both; }
 
-  .btn-primary { transition:all 0.2s ease; }
-  .btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 24px ${T.rose}45 !important; }
-  .btn-primary:active:not(:disabled) { transform:translateY(0); }
+  .btn-primary { transition:transform 160ms cubic-bezier(0.23,1,0.32,1), box-shadow 160ms cubic-bezier(0.23,1,0.32,1); }
+  @media (hover:hover) and (pointer:fine) {
+    .btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 24px ${T.rose}45 !important; }
+  }
+  .btn-primary:active:not(:disabled) { transform:scale(0.97); transition-duration:100ms; }
 
-  .btn-ghost { transition:all 0.2s ease; }
-  .btn-ghost:hover { background:${T.blush} !important; border-color:${T.roseMid} !important; }
+  .btn-ghost { transition:background 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out; }
+  @media (hover:hover) and (pointer:fine) {
+    .btn-ghost:hover { background:${T.blush} !important; border-color:${T.roseMid} !important; }
+  }
+  .btn-ghost:active { transform:scale(0.97); }
 
-  .row-hover { transition:background 0.12s; cursor:default; }
-  .row-hover:hover { background:${T.blush} !important; }
+  .row-hover { transition:background 120ms ease-out; cursor:default; }
+  @media (hover:hover) and (pointer:fine) {
+    .row-hover:hover { background:${T.blush} !important; }
+  }
 
-  .card-hover { transition:all 0.25s ease; }
-  .card-hover:hover { transform:translateY(-4px); box-shadow:0 16px 40px ${T.rose}15 !important; }
+  .card-hover { transition:transform 220ms cubic-bezier(0.23,1,0.32,1), box-shadow 220ms cubic-bezier(0.23,1,0.32,1); }
+  @media (hover:hover) and (pointer:fine) {
+    .card-hover:hover { transform:translateY(-4px); box-shadow:0 16px 40px ${T.rose}15 !important; }
+  }
 
-  .nav-item { transition:all 0.18s ease; border:none; cursor:pointer; }
-  .nav-item:hover { background:rgba(255,255,255,0.07) !important; }
+  .nav-item { transition:background 150ms ease-out; border:none; cursor:pointer; }
+  @media (hover:hover) and (pointer:fine) {
+    .nav-item:hover { background:rgba(255,255,255,0.07) !important; }
+  }
   .nav-item-active { background:rgba(196,72,112,0.15) !important; }
 
-  .sidebar-link { transition:all 0.18s ease; }
+  .sidebar-link { transition:background 150ms ease-out, color 150ms ease-out; }
 
   input, select, button, textarea { font-family:'Noto Naskh Arabic',serif; }
 
-  .stat-bar { transition:width 1.2s cubic-bezier(.22,.68,0,1.05); }
+  .stat-bar { transition:transform 1.2s cubic-bezier(.22,.68,0,1.05); transform-origin:right; }
+
+  @media (prefers-reduced-motion:reduce) {
+    .fade-up, .fade-in, .scale-in { animation-duration:0.01ms !important; }
+    .card-hover, .btn-primary, .btn-ghost { transition-duration:0.01ms !important; }
+    .stat-bar { transition-duration:0.01ms !important; }
+  }
 `;
 
 // ─── ICONS ────────────────────────────────────────────────────────────
@@ -195,7 +212,7 @@ const Modal = ({ title, onClose, children, width=390 }) => (
         <button onClick={onClose} style={{ background:"none", border:"none",
           color:T.mutedClr, cursor:"pointer", fontSize:18, lineHeight:1,
           width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
-          borderRadius:"50%", transition:"all 0.2s" }}
+          borderRadius:"50%", transition:"background 150ms ease-out, color 150ms ease-out" }}
           onMouseEnter={e=>{ e.currentTarget.style.background=T.blush; e.currentTarget.style.color=T.rose; }}
           onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color=T.mutedClr; }}>✕</button>
       </div>
@@ -217,7 +234,7 @@ const iStyle = (err=false) => ({
   border:`1.5px solid ${err?"#E8A8B4":T.border}`,
   borderRadius:11, padding:"10px 14px", color:T.text, fontSize:13,
   outline:"none", direction:"rtl", boxSizing:"border-box", fontFamily:"inherit",
-  transition:"all 0.2s",
+  transition:"border-color 150ms ease-out, background 150ms ease-out, box-shadow 150ms ease-out",
 });
 
 const BtnPrimary = ({ onClick, children, disabled, full, style={} }) => (
@@ -238,7 +255,7 @@ const BtnGhost = ({ onClick, children, style={} }) => (
     padding:"11px 22px", background:T.blush,
     border:`1.5px solid ${T.border}`, borderRadius:12,
     color:T.textSoft, fontFamily:"inherit", fontSize:13, cursor:"pointer",
-    transition:"all 0.2s", ...style }}>
+    ...style }}>
     {children}
   </button>
 );
@@ -375,7 +392,7 @@ function LoginScreen({ onLogin }) {
             {loading ? (
               <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 <span style={{ width:14, height:14, border:"2px solid rgba(255,255,255,0.3)",
-                  borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.8s linear infinite",
+                  borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.6s linear infinite",
                   display:"inline-block" }}/>
                 جاري التحقق...
               </span>
@@ -542,7 +559,7 @@ function BookingRow({ b, onCancel }) {
           <button onClick={()=>onCancel(b.id,b.name)} className="btn-ghost" style={{
             background:"#FDF0F3", border:`1px solid #EABAC0`, borderRadius:8,
             padding:"5px 12px", color:T.red, fontSize:11, cursor:"pointer",
-            fontFamily:"inherit", fontWeight:500, transition:"all 0.2s" }}>
+            fontFamily:"inherit", fontWeight:500, transition:"background 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out" }}>
             إلغاء
           </button>
         )}
@@ -586,7 +603,7 @@ function ReportsPage({ bookings }) {
           {[{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}].map(p=>(
             <button key={p.id} onClick={()=>setPeriod(p.id)} style={{
               padding:"7px 18px", borderRadius:9, border:"none", cursor:"pointer",
-              fontFamily:"inherit", fontSize:12, transition:"all 0.2s", fontWeight:500,
+              fontFamily:"inherit", fontSize:12, transition:"background 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out", fontWeight:500,
               background: period===p.id?`linear-gradient(135deg,${T.rose},${T.roseDark})`:"transparent",
               color: period===p.id?"#fff":T.textSoft,
               boxShadow: period===p.id?`0 2px 8px ${T.rose}40`:"none" }}>
@@ -600,7 +617,7 @@ function ReportsPage({ bookings }) {
               display:"flex", alignItems:"center", gap:7, padding:"8px 16px",
               background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:11,
               color:btn.c, fontFamily:"inherit", fontSize:12, cursor:"pointer",
-              fontWeight:500, transition:"all 0.2s" }}>
+              fontWeight:500, transition:"background 150ms ease-out, transform 100ms ease-out" }}>
               <Icon d={IC.dl} size={14} color={btn.c}/> {btn.l}
             </button>
           ))}
@@ -634,9 +651,9 @@ function ReportsPage({ bookings }) {
                     background:"#F0EAFA", padding:"2px 8px", borderRadius:8 }}>{stats.revenue.toLocaleString()} ﷼</span>
                 </div>
               </div>
-              <div style={{ height:7, background:T.bgDeep, borderRadius:4 }}>
-                <div className="stat-bar" style={{ height:"100%", borderRadius:4,
-                  width:Math.round((stats.count/maxC)*100)+"%",
+              <div style={{ height:7, background:T.bgDeep, borderRadius:4, overflow:"hidden" }}>
+                <div className="stat-bar" style={{ height:"100%", borderRadius:4, width:"100%",
+                  transform:`scaleX(${(stats.count/maxC).toFixed(3)})`,
                   background:`linear-gradient(90deg,${T.roseMid},${T.rose})` }}/>
               </div>
             </div>
@@ -661,8 +678,9 @@ function ReportsPage({ bookings }) {
                   <span style={{ color:item.color, fontWeight:700, fontSize:15,
                     fontFamily:"'Playfair Display',serif" }}>{item.value}%</span>
                 </div>
-                <div style={{ height:7, background:T.bgDeep, borderRadius:4 }}>
-                  <div className="stat-bar" style={{ height:"100%", borderRadius:4, width:item.value+"%",
+                <div style={{ height:7, background:T.bgDeep, borderRadius:4, overflow:"hidden" }}>
+                  <div className="stat-bar" style={{ height:"100%", borderRadius:4, width:"100%",
+                    transform:`scaleX(${(item.value/100).toFixed(3)})`,
                     background:`linear-gradient(90deg,${item.color}70,${item.color})` }}/>
                 </div>
               </div>
@@ -820,7 +838,7 @@ function UsersPage() {
         {loading ? (
           <div style={{ padding:40, textAlign:"center", color:T.mutedClr, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
             <span style={{ width:16, height:16, border:`2px solid ${T.border}`, borderTopColor:T.rose,
-              borderRadius:"50%", animation:"spin 0.8s linear infinite", display:"inline-block" }}/>
+              borderRadius:"50%", animation:"spin 0.6s linear infinite", display:"inline-block" }}/>
             جاري التحميل...
           </div>
         ) : users.map(u=>(
@@ -1006,7 +1024,7 @@ function Dashboard({ onLogout, initialRole, username }) {
                 <div style={{ width:32, height:32, borderRadius:9, flexShrink:0,
                   background: active?`linear-gradient(145deg,${T.rose}30,${T.rose}15)`:"rgba(255,255,255,0.05)",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  transition:"all 0.18s" }}>
+                  transition:"background 150ms ease-out" }}>
                   <Icon d={t.ip} size={15} color={active?T.rose:"rgba(255,255,255,0.4)"} sw={active?2:1.5}/>
                 </div>
                 <span style={{ flex:1 }}>{t.label}</span>
@@ -1047,7 +1065,7 @@ function Dashboard({ onLogout, initialRole, username }) {
               padding:"8px", background:"rgba(255,255,255,0.06)",
               border:"1px solid rgba(255,255,255,0.08)",
               borderRadius:9, color:"rgba(255,255,255,0.5)", fontFamily:"inherit",
-              fontSize:11, cursor:"pointer", transition:"all 0.18s" }}
+              fontSize:11, cursor:"pointer", transition:"background 150ms ease-out" }}
               onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
               onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
               <Icon d={IC.refresh} size={13} color="rgba(255,255,255,0.4)"
@@ -1059,7 +1077,7 @@ function Dashboard({ onLogout, initialRole, username }) {
               padding:"8px", background:`rgba(184,58,80,0.15)`,
               border:"1px solid rgba(184,58,80,0.25)",
               borderRadius:9, color:`${T.red}CC`, fontFamily:"inherit",
-              fontSize:11, cursor:"pointer", transition:"all 0.18s" }}
+              fontSize:11, cursor:"pointer", transition:"background 150ms ease-out" }}
               onMouseEnter={e=>e.currentTarget.style.background="rgba(184,58,80,0.25)"}
               onMouseLeave={e=>e.currentTarget.style.background="rgba(184,58,80,0.15)"}>
               <Icon d={IC.out} size={13} color={`${T.red}CC`}/> خروج
@@ -1185,9 +1203,9 @@ function Dashboard({ onLogout, initialRole, username }) {
                         <span style={{ color:s.color, fontSize:12, fontWeight:700,
                           background:`${s.color}12`, padding:"1px 8px", borderRadius:8 }}>{cnt}</span>
                       </div>
-                      <div style={{ height:6, background:T.bgDeep, borderRadius:3 }}>
-                        <div className="stat-bar" style={{ height:"100%", borderRadius:3,
-                          width:(Math.round((cnt/mx)*100)||6)+"%",
+                      <div style={{ height:6, background:T.bgDeep, borderRadius:3, overflow:"hidden" }}>
+                        <div className="stat-bar" style={{ height:"100%", borderRadius:3, width:"100%",
+                          transform:`scaleX(${Math.max(cnt/mx, 0.04).toFixed(3)})`,
                           background:`linear-gradient(90deg,${T.roseMid},${T.rose})` }}/>
                       </div>
                     </div>
@@ -1216,7 +1234,7 @@ function Dashboard({ onLogout, initialRole, username }) {
                 {[{id:"all",l:"الكل"},{id:"confirmed",l:"مكتملة"},{id:"pending",l:"معلقة"},{id:"cancelled",l:"ملغية"}].map(f=>(
                   <button key={f.id} onClick={()=>setFilter(f.id)} style={{
                     padding:"7px 15px", borderRadius:9, border:"none", cursor:"pointer",
-                    fontFamily:"inherit", fontSize:12, transition:"all 0.2s", fontWeight:500,
+                    fontFamily:"inherit", fontSize:12, transition:"background 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out", fontWeight:500,
                     background: filter===f.id?`linear-gradient(135deg,${T.rose},${T.roseDark})`:"transparent",
                     color: filter===f.id?"#fff":T.textSoft,
                     boxShadow: filter===f.id?`0 2px 8px ${T.rose}40`:"none" }}>
