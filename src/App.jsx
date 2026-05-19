@@ -427,6 +427,18 @@ function AddBooking({ onClose, onAdd, services }) {
   );
 }
 
+// ─── API HOOK ─────────────────────────────────────────────────────
+function useAPIData(endpoint) {
+  const [data,    setData]    = useState([]);
+  const [loading, setLoading] = useState(true);
+  const refetch = async () => {
+    try { const r=await fetch(API_URL+endpoint); setData(await r.json()); }
+    catch {} finally { setLoading(false); }
+  };
+  useEffect(()=>{ refetch(); },[]);
+  return [data, setData, loading, refetch];
+}
+
 // ─── SERVICES PAGE ────────────────────────────────────────────────────
 function ServicesPage({ storageKey="lamsa_services" }) {
   const [services, setServices] = useLocalStorage(storageKey, []);
@@ -680,18 +692,6 @@ function OffersPage({ storageKey="lamsa_offers" }) {
       )}
     </div>
   );
-}
-
-// ─── API HOOK ─────────────────────────────────────────────────────
-function useAPIData(endpoint) {
-  const [data,    setData]    = useState([]);
-  const [loading, setLoading] = useState(true);
-  const refetch = async () => {
-    try { const r=await fetch(API_URL+endpoint); setData(await r.json()); }
-    catch {} finally { setLoading(false); }
-  };
-  useEffect(()=>{ refetch(); },[]);
-  return [data, setData, loading, refetch];
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
