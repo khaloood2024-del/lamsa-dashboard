@@ -440,30 +440,37 @@ function useAPIData(endpoint) {
 }
 
 // ─── SERVICES PAGE ────────────────────────────────────────────────────
-function ServicesPage({ storageKey="lamsa_services" }) {
-  const [services, setServices] = useLocalStorage(storageKey, []);
+function ServicesPage() {
+  const [services, , loading, refetch] = useAPIData("/api/services");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [form,     setForm]     = useState({name:"",description:"",price:"",icon:"⭐"});
   const [formErr,  setFormErr]  = useState("");
+  const [saving,   setSaving]   = useState(false);
   const [showIcons,setShowIcons]= useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
 
   const openAdd  = ()=>{ setForm({name:"",description:"",price:"",icon:"⭐"}); setEditItem(null); setFormErr(""); setShowForm(true); };
   const openEdit = (s)=>{ setForm({name:s.name,description:s.description||"",price:String(s.price),icon:s.icon}); setEditItem(s); setFormErr(""); setShowForm(true); };
 
-  const save = ()=>{
+  const save = async()=>{
     if(!form.name.trim()) return setFormErr("اسم الخدمة مطلوب");
     if(!form.price||isNaN(Number(form.price))) return setFormErr("السعر يجب أن يكون رقماً");
-    if(editItem){
-      setServices(services.map(s=>s.id===editItem.id?{...s,...form,price:Number(form.price)}:s));
-    } else {
-      setServices([...services,{id:Date.now(),name:form.name,description:form.description,price:Number(form.price),icon:form.icon}]);
-    }
-    setShowForm(false);
+    setSaving(true);
+    try {
+      const url    = editItem ? API_URL+"/api/services/"+editItem.id : API_URL+"/api/services";
+      const method = editItem ? "PATCH" : "POST";
+      const res    = await fetch(url,{method,headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...form,price:Number(form.price)})});
+      if(!res.ok){ const d=await res.json(); return setFormErr(d.error||"حدث خطأ"); }
+      await refetch(); setShowForm(false);
+    } catch { setFormErr("تعذر الاتصال"); } finally { setSaving(false); }
   };
 
-  const del = (id)=>{ setServices(services.filter(s=>s.id!==id)); setConfirmDel(null); };
+  const del = async(id)=>{
+    await fetch(API_URL+"/api/services/"+id,{method:"DELETE"});
+    await refetch(); setConfirmDel(null);
+  };
 
   return (
     <div className="fu">
@@ -564,8 +571,8 @@ function ServicesPage({ storageKey="lamsa_services" }) {
 }
 
 // ─── OFFERS PAGE ──────────────────────────────────────────────────────
-function OffersPage({ storageKey="lamsa_offers" }) {
-  const [offers,   setOffers]  = useLocalStorage(storageKey, []);
+function OffersPage() {
+  const [offers, , loading, refetch] = useAPIData("/api/offers");
   const [showForm, setShowForm]= useState(false);
   const [editItem, setEditItem]= useState(null);
   const [form,     setForm]    = useState({name:"",description:"",price:"",icon:"🎁",discount:""});
@@ -573,16 +580,22 @@ function OffersPage({ storageKey="lamsa_offers" }) {
   const [showIcons,setShowIcons]=useState(false);
   const [confirmDel,setConfirmDel]=useState(null);
 
+  const [saving, setSaving] = useState(false);
   const openAdd  = ()=>{ setForm({name:"",description:"",price:"",icon:"🎁",discount:""}); setEditItem(null); setFormErr(""); setShowForm(true); };
   const openEdit = (o)=>{ setForm({name:o.name,description:o.description||"",price:String(o.price),icon:o.icon,discount:String(o.discount||"")}); setEditItem(o); setFormErr(""); setShowForm(true); };
 
-  const save = ()=>{
+  const save = async()=>{
     if(!form.name.trim()) return setFormErr("اسم العرض مطلوب");
     if(!form.price||isNaN(Number(form.price))) return setFormErr("السعر يجب أن يكون رقماً");
-    const item={...form,price:Number(form.price),discount:Number(form.discount)||0};
-    if(editItem) setOffers(offers.map(o=>o.id===editItem.id?{...o,...item}:o));
-    else setOffers([...offers,{id:Date.now(),...item}]);
-    setShowForm(false);
+    setSaving(true);
+    try {
+      const url    = editItem ? API_URL+"/api/offers/"+editItem.id : API_URL+"/api/offers";
+      const method = editItem ? "PATCH" : "POST";
+      const res    = await fetch(url,{method,headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...form,price:Number(form.price),discount:Number(form.discount)||0})});
+      if(!res.ok){ const d=await res.json(); return setFormErr(d.error||"حدث خطأ"); }
+      await refetch(); setShowForm(false);
+    } catch { setFormErr("تعذر الاتصال"); } finally { setSaving(false); }
   };
 
   return (
