@@ -88,6 +88,7 @@ const I = {
   eye:     "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   eyeoff:  "M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22",
   filter:  "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
+  settings:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   smile:   "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01",
 };
 
@@ -1079,6 +1080,135 @@ function UsersPage() {
   );
 }
 
+// ─── SETTINGS PAGE ───────────────────────────────────────────────
+function SettingsPage() {
+  const [settings, setSettings] = useState({
+    businessName:"",
+    businessType:"",
+    businessHours:"",
+    supportPhone:"",
+    supportName:"",
+  });
+  const [loading,  setLoading]  = useState(true);
+  const [saving,   setSaving]   = useState(false);
+  const [saved,    setSaved]    = useState(false);
+  const [error,    setError]    = useState("");
+
+  useEffect(()=>{
+    fetch(API_URL+"/api/settings")
+      .then(r=>r.json())
+      .then(d=>{ setSettings(s=>({...s,...d})); setLoading(false); })
+      .catch(()=>setLoading(false));
+  },[]);
+
+  const handleSave = async()=>{
+    setSaving(true); setError(""); setSaved(false);
+    try {
+      const res = await fetch(API_URL+"/api/settings",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(settings),
+      });
+      if(!res.ok){ const d=await res.json(); throw new Error(d.error||"حدث خطأ"); }
+      setSaved(true);
+      setTimeout(()=>setSaved(false), 3000);
+    } catch(e){ setError(e.message); }
+    finally{ setSaving(false); }
+  };
+
+  if(loading) return <div style={{padding:40,textAlign:"center",color:T.muted}}>جاري التحميل...</div>;
+
+  const sections = [
+    {
+      title:"معلومات المنشأة",
+      icon:"🏢",
+      fields:[
+        {key:"businessName", label:"اسم المنشأة",    placeholder:"مثال: صالون لمسة"},
+        {key:"businessType", label:"نوع المنشأة",     placeholder:"مثال: صالون / عيادة / فندق"},
+        {key:"businessHours",label:"أوقات الدوام",    placeholder:"مثال: السبت-الخميس 9ص-10م"},
+      ]
+    },
+    {
+      title:"الدعم والمساعدة",
+      icon:"👤",
+      desc:"الموظف الذي سيتلقى إشعارات تحويل العملاء عبر الواتساب",
+      fields:[
+        {key:"supportName",  label:"اسم الموظف المسؤول", placeholder:"مثال: أحمد"},
+        {key:"supportPhone", label:"رقم الواتساب",        placeholder:"مثال: +966500000000",
+         hint:"يستقبل إشعار فوري لما العميل يطلب التحدث مع موظف"},
+      ]
+    },
+  ];
+
+  return (
+    <div className="fu" style={{maxWidth:640}}>
+      {sections.map((sec,si)=>(
+        <div key={si} style={{
+          background:T.surface, border:`1.5px solid ${T.border}`,
+          borderRadius:14, overflow:"hidden", marginBottom:16 }}>
+          {/* Section Header */}
+          <div style={{padding:"14px 20px", borderBottom:`1.5px solid ${T.border}`,
+            background:T.bg, display:"flex", alignItems:"center", gap:8}}>
+            <span style={{fontSize:18}}>{sec.icon}</span>
+            <div>
+              <div style={{color:T.text, fontWeight:600, fontSize:14}}>{sec.title}</div>
+              {sec.desc&&<div style={{color:T.muted, fontSize:12, marginTop:2}}>{sec.desc}</div>}
+            </div>
+          </div>
+
+          {/* Fields */}
+          <div style={{padding:"18px 20px", display:"flex", flexDirection:"column", gap:14}}>
+            {sec.fields.map(f=>(
+              <Lbl key={f.key} label={f.label}>
+                <input
+                  value={settings[f.key]||""}
+                  onChange={e=>setSettings(p=>({...p,[f.key]:e.target.value}))}
+                  placeholder={f.placeholder}
+                  style={inp()}
+                  onFocus={fIn} onBlur={fOut()}/>
+                {f.hint&&<div style={{color:T.muted, fontSize:11, marginTop:5,
+                  display:"flex", alignItems:"center", gap:4}}>
+                  <Ico d={I.bell} size={11} color={T.muted}/> {f.hint}
+                </div>}
+              </Lbl>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Save */}
+      <div style={{display:"flex", alignItems:"center", gap:12}}>
+        <Btn onClick={handleSave} disabled={saving}
+          style={{padding:"11px 28px"}}>
+          {saving?"جاري الحفظ...":"حفظ الإعدادات"}
+        </Btn>
+        {saved&&(
+          <div style={{display:"flex", alignItems:"center", gap:6,
+            color:T.green, fontSize:13, fontWeight:500}}>
+            <Ico d={I.ok} size={14} color={T.green}/> تم الحفظ بنجاح
+          </div>
+        )}
+        {error&&<div style={{color:T.red, fontSize:12}}>{error}</div>}
+      </div>
+
+      {/* Info box */}
+      <div style={{marginTop:16, padding:"14px 16px",
+        background:"#EFF6FF", border:"1.5px solid #BFDBFE",
+        borderRadius:12, display:"flex", gap:10, alignItems:"flex-start"}}>
+        <Ico d={I.bell} size={15} color="#2563EB"/>
+        <div>
+          <div style={{color:"#1D4ED8", fontWeight:600, fontSize:13, marginBottom:4}}>
+            كيف يعمل التحويل للموظف؟
+          </div>
+          <div style={{color:"#3B82F6", fontSize:12, lineHeight:1.7}}>
+            عندما يطلب العميل التحدث مع موظف، يتلقى الرقم المحدد أعلاه رسالة واتساب تحتوي على:
+            اسم العميل + رقمه + ملخص المحادثة
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(()=>window.location.hash.startsWith("#auth"));
@@ -1145,12 +1275,13 @@ function Dashboard({ onLogout, role, username }) {
   const pending   = visibleBookings.filter(b=>b.status==="pending");
 
   const TABS = [
-    {id:"overview",label:"نظرة عامة",  icon:I.grid},
-    {id:"bookings",label:"الحجوزات",   icon:I.cal},
-    {id:"services",label:"الخدمات",    icon:I.box},
-    {id:"offers",  label:"العروض",     icon:I.tag},
-    {id:"reports", label:"التقارير",   icon:I.trend, admin:true},
-    {id:"users",   label:"المستخدمون", icon:I.users, admin:true},
+    {id:"overview", label:"نظرة عامة",  icon:I.grid},
+    {id:"bookings", label:"الحجوزات",   icon:I.cal},
+    {id:"services", label:"الخدمات",    icon:I.box},
+    {id:"offers",   label:"العروض",     icon:I.tag},
+    {id:"reports",  label:"التقارير",   icon:I.trend, admin:true},
+    {id:"users",    label:"المستخدمون", icon:I.users, admin:true},
+    {id:"settings", label:"الإعدادات",  icon:I.settings, admin:true},
   ];
 
   return (
@@ -1352,6 +1483,14 @@ function Dashboard({ onLogout, role, username }) {
         {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
+
+        {tab==="settings"&&(isAdmin?<SettingsPage/>:(
+          <div style={{textAlign:"center",padding:60}}>
+            <div style={{fontSize:48,marginBottom:16,opacity:0.3}}>🔒</div>
+            <div style={{color:T.muted,fontSize:14,marginBottom:20}}>هذه الصفحة للمدير فقط</div>
+            <Btn onClick={()=>setShowAdminModal(true)}>دخول كمدير</Btn>
+          </div>
+        ))}
 
         {tab==="reports"&&(isAdmin?<Reports bookings={bookings}/>:(
           <div style={{textAlign:"center",padding:60}}>
