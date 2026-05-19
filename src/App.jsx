@@ -502,7 +502,7 @@ function ServicesPage({ storageKey="lamsa_services" }) {
             {formErr&&<div style={{color:T.red,fontSize:12}}>{formErr}</div>}
           </div>
           <div style={{display:"flex",gap:8}}>
-            <Btn onClick={save} style={{flex:1}}>حفظ</Btn>
+            <Btn onClick={save} disabled={saving} style={{flex:1}}>{saving?"جاري الحفظ...":"حفظ"}</Btn>
             <Btn onClick={()=>setShowForm(false)} variant="ghost" style={{flex:1}}>إلغاء</Btn>
           </div>
         </Modal>
@@ -575,7 +575,7 @@ function OffersPage({ storageKey="lamsa_offers" }) {
 
   return (
     <div className="fu">
-      {confirmDel && <Confirm msg={`حذف عرض "${confirmDel.name}"؟`} onOk={()=>{setOffers(offers.filter(o=>o.id!==confirmDel.id));setConfirmDel(null);}} onCancel={()=>setConfirmDel(null)}/>}
+      {confirmDel && <Confirm msg={`حذف عرض "${confirmDel.name}"؟`} onOk={async()=>{ await fetch(API_URL+"/api/offers/"+confirmDel.id,{method:"DELETE"}); await refetch(); setConfirmDel(null); }} onCancel={()=>setConfirmDel(null)}/>}
       {showForm && (
         <Modal title={editItem?"تعديل العرض":"إضافة عرض جديد"} onClose={()=>setShowForm(false)} width={420}>
           <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:16}}>
@@ -627,7 +627,7 @@ function OffersPage({ storageKey="lamsa_offers" }) {
             {formErr&&<div style={{color:T.red,fontSize:12}}>{formErr}</div>}
           </div>
           <div style={{display:"flex",gap:8}}>
-            <Btn onClick={save} style={{flex:1}}>حفظ</Btn>
+            <Btn onClick={save} disabled={saving} style={{flex:1}}>{saving?"جاري الحفظ...":"حفظ"}</Btn>
             <Btn onClick={()=>setShowForm(false)} variant="ghost" style={{flex:1}}>إلغاء</Btn>
           </div>
         </Modal>
@@ -682,14 +682,16 @@ function OffersPage({ storageKey="lamsa_offers" }) {
   );
 }
 
-// ─── LOCAL STORAGE HOOK ───────────────────────────────────────────────
-function useLocalStorage(key, initial) {
-  const [val, setVal] = useState(()=>{
-    try{ const s=localStorage.getItem(key); return s?JSON.parse(s):initial; }
-    catch{ return initial; }
-  });
-  const set = (v) => { setVal(v); try{localStorage.setItem(key,JSON.stringify(v));}catch{} };
-  return [val, set];
+// ─── API HOOK ─────────────────────────────────────────────────────
+function useAPIData(endpoint) {
+  const [data,    setData]    = useState([]);
+  const [loading, setLoading] = useState(true);
+  const refetch = async () => {
+    try { const r=await fetch(API_URL+endpoint); setData(await r.json()); }
+    catch {} finally { setLoading(false); }
+  };
+  useEffect(()=>{ refetch(); },[]);
+  return [data, setData, loading, refetch];
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
@@ -1089,7 +1091,7 @@ function Dashboard({ onLogout, role, username }) {
   const [confirm,   setConfirm]   = useState(null);
   const [isAdmin,   setIsAdmin]   = useState(()=>role==="admin");
   const [showAdminModal, setShowAdminModal] = useState(false);
-  const [services,  setServices]  = useLocalStorage("lamsa_services", []);
+  const [services] = useAPIData("/api/services");
 
   const notif = (msg,type="success") => {
     const id=Date.now(); setNotifs(p=>[...p,{id,msg,type}]);
