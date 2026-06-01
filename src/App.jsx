@@ -709,7 +709,7 @@ function OffersPage() {
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
-function BookingsPage({ bookings, onCancel }) {
+function BookingsPage({ bookings, onCancel, onConfirm }) {
   const [filters, setFilters] = useState({ name:"", service:"", date:"", time:"", status:"all" });
 
   const setF = (k,v) => setFilters(p=>({...p,[k]:v}));
@@ -783,11 +783,18 @@ function BookingsPage({ bookings, onCancel }) {
                 <div style={{color:T.accent,fontWeight:600,fontSize:12,fontFamily:"'DM Mono',monospace"}}>{b.price}</div>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <Tag label={s.label} type={s.type}/>
-                  {b.status!=="cancelled"&&(
-                    <button onClick={()=>onCancel(b.id,b.name)} className="t" style={{
-                      background:T.redBg,border:"1px solid #FECACA",borderRadius:5,
-                      padding:"3px 8px",color:T.red,fontSize:11,cursor:"pointer"}}>إلغاء</button>
-                  )}
+                  <div style={{display:"flex",gap:4}}>
+                    {b.status==="pending"&&(
+                      <button onClick={()=>onConfirm(b.id)} className="t" style={{
+                        background:T.greenBg,border:"1.5px solid #BBF7D0",borderRadius:5,
+                        padding:"3px 8px",color:T.green,fontSize:11,cursor:"pointer",fontWeight:500}}>تأكيد</button>
+                    )}
+                    {b.status!=="cancelled"&&(
+                      <button onClick={()=>onCancel(b.id,b.name)} className="t" style={{
+                        background:T.redBg,border:"1px solid #FECACA",borderRadius:5,
+                        padding:"3px 8px",color:T.red,fontSize:11,cursor:"pointer"}}>إلغاء</button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -1255,6 +1262,12 @@ function Dashboard({ onLogout, role, username }) {
     es.onerror=()=>es.close();return()=>es.close();
   },[fetchB]);
 
+  const confirmBooking = async(id) => {
+    try { await fetch(API_URL+"/api/bookings/"+id+"/confirm",{method:"PATCH"}); }
+    catch {}
+    setBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b));
+    notif("✅ تم تأكيد الموعد","success");
+  };
   const cancelBooking = (id,name) => setConfirm({id,name});
   const doCancel = async()=>{
     const{id}=confirm; setConfirm(null);
@@ -1480,7 +1493,7 @@ function Dashboard({ onLogout, role, username }) {
           </div>
         )}
 
-        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking}/>}
+        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
 
