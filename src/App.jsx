@@ -88,6 +88,7 @@ const I = {
   eye:     "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   eyeoff:  "M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22",
   filter:  "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
+  star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
   settings:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   smile:   "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01",
 };
@@ -1087,6 +1088,87 @@ function UsersPage() {
   );
 }
 
+// ─── REVIEWS PAGE ────────────────────────────────────────────────
+function ReviewsPage() {
+  const [reviews, , loading, refetch] = useAPIData("/api/reviews");
+
+  const avg = reviews.length > 0
+    ? (reviews.reduce((s,r) => s + (r.rating||0), 0) / reviews.length).toFixed(1)
+    : "—";
+
+  const stars = (n) => "⭐".repeat(n) + "☆".repeat(5-n);
+
+  return (
+    <div className="fu">
+      {/* Summary */}
+      <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14, marginBottom:22}}>
+        <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
+          borderRadius:14,padding:20,borderTop:`3px solid ${T.amber}`,textAlign:"center"}}>
+          <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>متوسط التقييم</div>
+          <div style={{fontSize:32,fontWeight:700,color:T.amber,fontFamily:"'DM Mono',monospace"}}>{avg}</div>
+          <div style={{fontSize:20,marginTop:4}}>⭐</div>
+        </div>
+        <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
+          borderRadius:14,padding:20,borderTop:`3px solid ${T.accent}`,textAlign:"center"}}>
+          <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>إجمالي التقييمات</div>
+          <div style={{fontSize:32,fontWeight:700,color:T.accent,fontFamily:"'DM Mono',monospace"}}>{reviews.length}</div>
+        </div>
+        <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
+          borderRadius:14,padding:20,borderTop:`3px solid ${T.green}`,textAlign:"center"}}>
+          <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>مع ملاحظات</div>
+          <div style={{fontSize:32,fontWeight:700,color:T.green,fontFamily:"'DM Mono',monospace"}}>
+            {reviews.filter(r=>r.note).length}
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews table */}
+      <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,overflow:"hidden"}}>
+        <div style={{padding:"14px 20px",borderBottom:`1.5px solid ${T.border}`,
+          display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{color:T.text,fontWeight:600,fontSize:13}}>التقييمات</span>
+          <span style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace"}}>{reviews.length} تقييم</span>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 0.6fr 1fr 1.5fr",
+          padding:"10px 20px",background:T.bg,borderBottom:`1.5px solid ${T.border}`}}>
+          {["العميل","التقييم","التاريخ","الملاحظة"].map(h=>(
+            <div key={h} style={{color:T.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>{h}</div>
+          ))}
+        </div>
+
+        {loading
+          ?<div style={{padding:30,textAlign:"center",color:T.muted}}>جاري التحميل...</div>
+          :reviews.length===0
+          ?<div style={{padding:40,textAlign:"center",color:T.muted,fontSize:13}}>
+            <div style={{fontSize:32,marginBottom:8,opacity:0.3}}>⭐</div>
+            لا توجد تقييمات بعد
+          </div>
+          :reviews.map(r=>(
+            <div key={r.id} className="row-h" style={{display:"grid",gridTemplateColumns:"1fr 0.6fr 1fr 1.5fr",
+              alignItems:"center",padding:"13px 20px",borderBottom:`1px solid ${T.border}80`,background:T.surface}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <Avatar name={r.name} role="staff" size={30}/>
+                <div>
+                  <div style={{color:T.text,fontSize:13,fontWeight:500}}>{r.name||"—"}</div>
+                  <div style={{color:T.muted,fontSize:11}}>{r.phone?.replace("whatsapp:","")}</div>
+                </div>
+              </div>
+              <div style={{fontSize:16}}>{r.rating ? stars(r.rating) : "—"}</div>
+              <div style={{color:T.muted,fontSize:12}}>
+                {new Date(r.created_at).toLocaleDateString("ar-SA",{year:"numeric",month:"short",day:"numeric"})}
+              </div>
+              <div style={{color:T.textSoft,fontSize:12,fontStyle:r.note?"normal":"italic"}}>
+                {r.note || <span style={{color:T.muted}}>لا توجد ملاحظة</span>}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
 // ─── SETTINGS PAGE ───────────────────────────────────────────────
 function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -1294,6 +1376,7 @@ function Dashboard({ onLogout, role, username }) {
     {id:"offers",   label:"العروض",     icon:I.tag},
     {id:"reports",  label:"التقارير",   icon:I.trend, admin:true},
     {id:"users",    label:"المستخدمون", icon:I.users, admin:true},
+    {id:"reviews",  label:"التقييمات",  icon:I.star},
     {id:"settings", label:"الإعدادات",  icon:I.settings, admin:true},
   ];
 
@@ -1496,6 +1579,8 @@ function Dashboard({ onLogout, role, username }) {
         {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
+
+        {tab==="reviews" && <ReviewsPage/>}
 
         {tab==="settings"&&(isAdmin?<SettingsPage/>:(
           <div style={{textAlign:"center",padding:60}}>
