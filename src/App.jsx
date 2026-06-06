@@ -35,6 +35,16 @@ const T = {
   sideBg:   "#0F172A",
 };
 
+// تحويل رقم الجوال إلى صيغة 05XXXXXXXX
+const formatPhone = (phone) => {
+  if (!phone) return "";
+  let p = phone.replace("whatsapp:","");
+  if (p.startsWith("+966")) p = "0" + p.slice(4);
+  else if (p.startsWith("966")) p = "0" + p.slice(3);
+  else if (p.startsWith("00966")) p = "0" + p.slice(5);
+  return p;
+};
+
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -841,7 +851,7 @@ function Reports({ bookings }) {
     const h=["الاسم","الهاتف","الخدمة","التاريخ","الوقت","السعر","الحالة"];
     const r=all.map(b=>[
       b.name,
-      "'" + (b.phone?.replace("whatsapp:","") || ""),
+      "'"+formatPhone(b.phone),
       b.service,
       formatDate(b.date),
       b.time,
@@ -1171,7 +1181,7 @@ function ReviewsPage() {
                 <Avatar name={r.name} role="staff" size={30}/>
                 <div>
                   <div style={{color:T.text,fontSize:13,fontWeight:500}}>{r.name||"—"}</div>
-                  <div style={{color:T.muted,fontSize:11}}>{r.phone?.replace("whatsapp:","")}</div>
+                  <div style={{color:T.muted,fontSize:11}}>{formatPhone(r.phone)}</div>
                 </div>
               </div>
               <div style={{fontSize:16}}>{r.rating ? stars(r.rating) : "—"}</div>
