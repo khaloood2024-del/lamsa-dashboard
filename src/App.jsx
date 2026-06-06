@@ -808,29 +808,21 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
 
 // ─── REPORTS ─────────────────────────────────────────────────────────
 function Reports({ bookings }) {
-  const [period, setPeriod] = useState("monthly");
+  const [period,     setPeriod]     = useState("monthly");
+  const [activeView, setActiveView] = useState("reports");
 
   const filterByPeriod = (bList) => {
     const now = new Date();
     return bList.filter(b => {
-      // نحاول تحليل التاريخ
       const resolved = resolveDate(b.date);
-      if (!resolved) return true; // لو ما قدرنا نحلله نحسبه
-      if (period === "daily") {
-        return resolved.toDateString() === now.toDateString();
-      }
-      if (period === "weekly") {
-        const diff = (now - resolved) / (1000*60*60*24);
-        return diff <= 7;
-      }
-      if (period === "monthly") {
-        return resolved.getMonth()===now.getMonth() && resolved.getFullYear()===now.getFullYear();
-      }
+      if (!resolved) return true;
+      if (period === "daily")   return resolved.toDateString() === now.toDateString();
+      if (period === "weekly")  return (now - resolved) / (1000*60*60*24) <= 7;
+      if (period === "monthly") return resolved.getMonth()===now.getMonth() && resolved.getFullYear()===now.getFullYear();
       return true;
     });
   };
 
-  // التقارير تحفظ كل الحجوزات (ملغية ومؤكدة)
   const all  = filterByPeriod(bookings);
   const done = all.filter(b=>b.status==="confirmed");
   const fail = all.filter(b=>b.status==="cancelled");
@@ -858,125 +850,145 @@ function Reports({ bookings }) {
 
   return (
     <div className="fu">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
-        <div style={{display:"flex",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:10,padding:3}}>
-          {[{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}].map(p=>(
-            <button key={p.id} onClick={()=>setPeriod(p.id)} className="t" style={{
-              padding:"6px 16px",borderRadius:7,border:"none",cursor:"pointer",
-              fontFamily:"inherit",fontSize:12,
-              background:period===p.id?T.accent:"transparent",
-              color:period===p.id?"#fff":T.textSoft,fontWeight:period===p.id?600:400}}>
-              {p.l}
-            </button>
-          ))}
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          <button onClick={exportCSV} className="t" style={{
-            display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
-            background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:8,
-            color:T.green,fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
-            <Ico d={I.dl} size={13} color={T.green}/> Excel
+      {/* Sub tabs */}
+      <div style={{display:"flex",gap:4,background:T.surface,border:"1.5px solid "+T.border,
+        borderRadius:10,padding:3,marginBottom:22,width:"fit-content"}}>
+        {[{id:"reports",l:"التقارير"},{id:"reviews",l:"تقييم العملاء"}].map(v=>(
+          <button key={v.id} onClick={()=>setActiveView(v.id)} className="t" style={{
+            padding:"7px 20px",borderRadius:7,border:"none",cursor:"pointer",
+            fontFamily:"inherit",fontSize:12,
+            background:activeView===v.id?T.accent:"transparent",
+            color:activeView===v.id?"#fff":T.textSoft,
+            fontWeight:activeView===v.id?600:400}}>
+            {v.l}
           </button>
-          <button onClick={()=>window.print()} className="t" style={{
-            display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
-            background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:8,
-            color:T.red,fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
-            <Ico d={I.dl} size={13} color={T.red}/> PDF
-          </button>
-        </div>
+        ))}
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
-        <KPI label="إجمالي الحجوزات" value={all.length}  sub="مؤكدة + ملغية"      icon={I.cal}   color={T.accent} delay={0}/>
-        <KPI label="مؤكدة"            value={done.length} sub={done.length+" حجز"}  icon={I.ok}    color={T.green}  delay={.05}/>
-        <KPI label="ملغية"            value={fail.length} sub={fail.length+" حجز"}  icon={I.warn}  color={T.red}    delay={.1}/>
-        <KPI label="إجمالي الإيرادات" value={rev.toLocaleString()+" ر.س"} sub="من المؤكدة" icon={I.trend} color={T.purple} delay={.15}/>
-      </div>
+      {activeView==="reviews" && <ReviewsPage/>}
 
-      <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:16,marginBottom:16}}>
-        <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"20px"}}>
-          <div style={{color:T.text,fontWeight:600,fontSize:13,marginBottom:16}}>الخدمات الأكثر طلباً</div>
-          {sorted.length===0
-            ?<div style={{textAlign:"center",color:T.muted,fontSize:13,padding:20}}>لا توجد بيانات</div>
-            :sorted.map(([name,s])=>(
-              <div key={name} style={{marginBottom:14}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                  <span style={{color:T.textSoft,fontSize:12}}>{name}</span>
-                  <div style={{display:"flex",gap:10}}>
-                    <span style={{color:T.green,fontSize:11,fontWeight:500,fontFamily:"'DM Mono',monospace"}}>{s.count} حجز</span>
-                    <span style={{color:T.purple,fontSize:11,fontWeight:500,fontFamily:"'DM Mono',monospace"}}>{s.revenue.toLocaleString()} ر.س</span>
+      {activeView==="reports" && (
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+            <div style={{display:"flex",background:T.surface,border:"1.5px solid "+T.border,borderRadius:10,padding:3}}>
+              {[{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}].map(p=>(
+                <button key={p.id} onClick={()=>setPeriod(p.id)} className="t" style={{
+                  padding:"6px 16px",borderRadius:7,border:"none",cursor:"pointer",
+                  fontFamily:"inherit",fontSize:12,
+                  background:period===p.id?T.accent:"transparent",
+                  color:period===p.id?"#fff":T.textSoft,fontWeight:period===p.id?600:400}}>
+                  {p.l}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={exportCSV} className="t" style={{
+                display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+                background:T.surface,border:"1.5px solid "+T.border,borderRadius:8,
+                color:T.green,fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
+                <Ico d={I.dl} size={13} color={T.green}/> Excel
+              </button>
+              <button onClick={()=>window.print()} className="t" style={{
+                display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+                background:T.surface,border:"1.5px solid "+T.border,borderRadius:8,
+                color:T.red,fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
+                <Ico d={I.dl} size={13} color={T.red}/> PDF
+              </button>
+            </div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+            <KPI label="إجمالي الحجوزات" value={all.length}  sub="مؤكدة + ملغية"      icon={I.cal}   color={T.accent} delay={0}/>
+            <KPI label="مؤكدة"            value={done.length} sub={done.length+" حجز"}  icon={I.ok}    color={T.green}  delay={.05}/>
+            <KPI label="ملغية"            value={fail.length} sub={fail.length+" حجز"}  icon={I.warn}  color={T.red}    delay={.1}/>
+            <KPI label="إجمالي الإيرادات" value={rev.toLocaleString()+" ر.س"} sub="من المؤكدة" icon={I.trend} color={T.purple} delay={.15}/>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:16,marginBottom:16}}>
+            <div style={{background:T.surface,border:"1.5px solid "+T.border,borderRadius:14,padding:"20px"}}>
+              <div style={{color:T.text,fontWeight:600,fontSize:13,marginBottom:16}}>الخدمات الأكثر طلباً</div>
+              {sorted.length===0
+                ?<div style={{textAlign:"center",color:T.muted,fontSize:13,padding:20}}>لا توجد بيانات</div>
+                :sorted.map(([name,s])=>(
+                  <div key={name} style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                      <span style={{color:T.textSoft,fontSize:12}}>{name}</span>
+                      <div style={{display:"flex",gap:10}}>
+                        <span style={{color:T.green,fontSize:11,fontWeight:500,fontFamily:"'DM Mono',monospace"}}>{s.count} حجز</span>
+                        <span style={{color:T.purple,fontSize:11,fontWeight:500,fontFamily:"'DM Mono',monospace"}}>{s.revenue.toLocaleString()} ر.س</span>
+                      </div>
+                    </div>
+                    <div style={{height:6,background:T.bg,borderRadius:3}}>
+                      <div style={{height:"100%",borderRadius:3,width:Math.round((s.count/maxC)*100)+"%",
+                        background:"linear-gradient(90deg,"+T.accent+"70,"+T.accent+")",transition:"width 1s ease"}}/>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+
+            <div style={{background:T.surface,border:"1.5px solid "+T.border,borderRadius:14,padding:"20px"}}>
+              <div style={{color:T.text,fontWeight:600,fontSize:13,marginBottom:16}}>نسب الأداء</div>
+              {[
+                {label:"معدل الإكمال",value:all.length?Math.round((done.length/all.length)*100):0,color:T.green},
+                {label:"معدل الإلغاء",value:all.length?Math.round((fail.length/all.length)*100):0,color:T.red},
+              ].map(item=>(
+                <div key={item.label} style={{marginBottom:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                    <span style={{color:T.textSoft,fontSize:13}}>{item.label}</span>
+                    <span style={{color:item.color,fontWeight:600,fontSize:13,fontFamily:"'DM Mono',monospace"}}>{item.value}%</span>
+                  </div>
+                  <div style={{height:6,background:T.bg,borderRadius:3}}>
+                    <div style={{height:"100%",borderRadius:3,width:item.value+"%",
+                      background:"linear-gradient(90deg,"+item.color+"70,"+item.color+")",transition:"width 1s ease"}}/>
                   </div>
                 </div>
-                <div style={{height:6,background:T.bg,borderRadius:3}}>
-                  <div style={{height:"100%",borderRadius:3,width:Math.round((s.count/maxC)*100)+"%",
-                    background:`linear-gradient(90deg,${T.accent}70,${T.accent})`,transition:"width 1s ease"}}/>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-
-        <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"20px"}}>
-          <div style={{color:T.text,fontWeight:600,fontSize:13,marginBottom:16}}>نسب الأداء</div>
-          {[
-            {label:"معدل الإكمال",value:all.length?Math.round((done.length/all.length)*100):0,color:T.green},
-            {label:"معدل الإلغاء",value:all.length?Math.round((fail.length/all.length)*100):0,color:T.red},
-          ].map(item=>(
-            <div key={item.label} style={{marginBottom:16}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                <span style={{color:T.textSoft,fontSize:13}}>{item.label}</span>
-                <span style={{color:item.color,fontWeight:600,fontSize:13,fontFamily:"'DM Mono',monospace"}}>{item.value}%</span>
-              </div>
-              <div style={{height:6,background:T.bg,borderRadius:3}}>
-                <div style={{height:"100%",borderRadius:3,width:item.value+"%",
-                  background:`linear-gradient(90deg,${item.color}70,${item.color})`,transition:"width 1s ease"}}/>
+              ))}
+              <div style={{paddingTop:14,borderTop:"1.5px solid "+T.border}}>
+                {[
+                  {l:"العملاء الفريدين",     v:uniq,                                                                c:T.purple},
+                  {l:"متوسط قيمة الحجز",    v:(done.length?Math.round(rev/done.length):0).toLocaleString()+" ر.س", c:T.accent},
+                  {l:"إجمالي الإيرادات",     v:rev.toLocaleString()+" ر.س",                                        c:T.text},
+                ].map(item=>(
+                  <div key={item.l} style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                    <span style={{color:T.textSoft,fontSize:12}}>{item.l}</span>
+                    <span style={{color:item.c,fontWeight:600,fontSize:12,fontFamily:"'DM Mono',monospace"}}>{item.v}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-          <div style={{paddingTop:14,borderTop:`1.5px solid ${T.border}`}}>
-            {[
-              {l:"العملاء الفريدين",     v:uniq,                                                                c:T.purple},
-              {l:"متوسط قيمة الحجز",    v:(done.length?Math.round(rev/done.length):0).toLocaleString()+" ر.س", c:T.accent},
-              {l:"إجمالي الإيرادات",     v:rev.toLocaleString()+" ر.س",                                        c:T.text},
-            ].map(item=>(
-              <div key={item.l} style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                <span style={{color:T.textSoft,fontSize:12}}>{item.l}</span>
-                <span style={{color:item.c,fontWeight:600,fontSize:12,fontFamily:"'DM Mono',monospace"}}>{item.v}</span>
-              </div>
-            ))}
+          </div>
+
+          <div style={{background:T.surface,border:"1.5px solid "+T.border,borderRadius:14,overflow:"hidden"}}>
+            <div style={{padding:"14px 20px",borderBottom:"1.5px solid "+T.border,
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{color:T.text,fontWeight:600,fontSize:13}}>سجل الحجوزات</span>
+              <span style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace"}}>{all.length} سجل</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 0.8fr 0.8fr",
+              padding:"9px 20px",background:T.bg,borderBottom:"1.5px solid "+T.border}}>
+              {["العميل","الخدمة","التاريخ","المبلغ","الحالة"].map(h=>(
+                <div key={h} style={{color:T.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>{h}</div>
+              ))}
+            </div>
+            <div style={{maxHeight:280,overflow:"auto"}}>
+              {all.length===0
+                ?<div style={{padding:30,textAlign:"center",color:T.muted,fontSize:13}}>لا توجد بيانات</div>
+                :all.map(b=>(
+                  <div key={b.id} className="row-h" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 0.8fr 0.8fr",
+                    padding:"11px 20px",borderBottom:"1px solid "+T.border+"80",background:T.surface}}>
+                    <div style={{color:T.text,fontSize:13}}>{b.name}</div>
+                    <div style={{color:T.textSoft,fontSize:12}}>{b.service}</div>
+                    <div style={{color:T.muted,fontSize:12}}>{formatDate(b.date)} {b.time}</div>
+                    <div style={{color:T.accent,fontWeight:500,fontSize:12,fontFamily:"'DM Mono',monospace"}}>{b.price}</div>
+                    <Tag label={b.status==="confirmed"?"مؤكد":"ملغي"} type={b.status==="confirmed"?"confirmed":"cancelled"}/>
+                  </div>
+                ))
+              }
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* جدول تفصيلي */}
-      <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,overflow:"hidden"}}>
-        <div style={{padding:"14px 20px",borderBottom:`1.5px solid ${T.border}`,
-          display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{color:T.text,fontWeight:600,fontSize:13}}>سجل الحجوزات</span>
-          <span style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace"}}>{all.length} سجل</span>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 0.8fr 0.8fr",
-          padding:"9px 20px",background:T.bg,borderBottom:`1.5px solid ${T.border}`}}>
-          {["العميل","الخدمة","التاريخ","المبلغ","الحالة"].map(h=>(
-            <div key={h} style={{color:T.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>{h}</div>
-          ))}
-        </div>
-        <div style={{maxHeight:280,overflow:"auto"}}>
-          {all.length===0
-            ?<div style={{padding:30,textAlign:"center",color:T.muted,fontSize:13}}>لا توجد بيانات</div>
-            :all.map(b=>(
-              <div key={b.id} className="row-h" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 0.8fr 0.8fr",
-                padding:"11px 20px",borderBottom:`1px solid ${T.border}80`,background:T.surface}}>
-                <div style={{color:T.text,fontSize:13}}>{b.name}</div>
-                <div style={{color:T.textSoft,fontSize:12}}>{b.service}</div>
-                <div style={{color:T.muted,fontSize:12}}>{formatDate(b.date)} {b.time}</div>
-                <div style={{color:T.accent,fontWeight:500,fontSize:12,fontFamily:"'DM Mono',monospace"}}>{b.price}</div>
-                <Tag label={b.status==="confirmed"?"مؤكد":"ملغي"} type={b.status==="confirmed"?"confirmed":"cancelled"}/>
-              </div>
-            ))
-          }
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1171,6 +1183,7 @@ function ReviewsPage() {
 
 // ─── SETTINGS PAGE ───────────────────────────────────────────────
 function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("settings"); // settings | users
   const [settings, setSettings] = useState({
     businessName:"",
     businessType:"",
@@ -1206,6 +1219,29 @@ function SettingsPage() {
 
   if(loading) return <div style={{padding:40,textAlign:"center",color:T.muted}}>جاري التحميل...</div>;
 
+  return (
+    <div className="fu" style={{maxWidth:680}}>
+      {/* Sub tabs */}
+      <div style={{display:"flex",gap:4,background:T.surface,border:`1.5px solid ${T.border}`,
+        borderRadius:10,padding:3,marginBottom:24,width:"fit-content"}}>
+        {[{id:"settings",l:"الإعدادات"},{id:"users",l:"المستخدمون"}].map(v=>(
+          <button key={v.id} onClick={()=>setActiveTab(v.id)} className="t" style={{
+            padding:"7px 20px",borderRadius:7,border:"none",cursor:"pointer",
+            fontFamily:"inherit",fontSize:12,
+            background:activeTab===v.id?T.accent:"transparent",
+            color:activeTab===v.id?"#fff":T.textSoft,
+            fontWeight:activeTab===v.id?600:400}}>
+            {v.l}
+          </button>
+        ))}
+      </div>
+      {activeTab==="users" && <UsersPage/>}
+      {activeTab==="settings" && <SettingsInner settings={settings} setSettings={setSettings} saving={saving} saved={saved} error={error} handleSave={handleSave}/>}
+    </div>
+  );
+}
+
+function SettingsInner({ settings, setSettings, saving, saved, error, handleSave }) {
   const sections = [
     {
       title:"معلومات المنشأة",
@@ -1229,7 +1265,7 @@ function SettingsPage() {
   ];
 
   return (
-    <div className="fu" style={{maxWidth:640}}>
+    <>
       {sections.map((sec,si)=>(
         <div key={si} style={{
           background:T.surface, border:`1.5px solid ${T.border}`,
@@ -1294,7 +1330,7 @@ function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -1375,8 +1411,6 @@ function Dashboard({ onLogout, role, username }) {
     {id:"services", label:"الخدمات",    icon:I.box},
     {id:"offers",   label:"العروض",     icon:I.tag},
     {id:"reports",  label:"التقارير",   icon:I.trend, admin:true},
-    {id:"users",    label:"المستخدمون", icon:I.users, admin:true},
-    {id:"reviews",  label:"التقييمات",  icon:I.star},
     {id:"settings", label:"الإعدادات",  icon:I.settings, admin:true},
   ];
 
@@ -1580,8 +1614,6 @@ function Dashboard({ onLogout, role, username }) {
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
 
-        {tab==="reviews" && <ReviewsPage/>}
-
         {tab==="settings"&&(isAdmin?<SettingsPage/>:(
           <div style={{textAlign:"center",padding:60}}>
             <div style={{fontSize:48,marginBottom:16,opacity:0.3}}>🔒</div>
@@ -1598,14 +1630,8 @@ function Dashboard({ onLogout, role, username }) {
           </div>
         ))}
 
-        {tab==="users"&&(isAdmin?<UsersPage/>:(
-          <div style={{textAlign:"center",padding:60}}>
-            <div style={{fontSize:48,marginBottom:16,opacity:0.3}}>🔒</div>
-            <div style={{color:T.muted,fontSize:14,marginBottom:20}}>هذه الصفحة للمدير فقط</div>
-            <Btn onClick={()=>setShowAdminModal(true)}>دخول كمدير</Btn>
-          </div>
-        ))}
+
       </div>
     </div>
   );
-}
+}    
