@@ -839,7 +839,15 @@ function Reports({ bookings }) {
 
   const exportCSV = () => {
     const h=["الاسم","الهاتف","الخدمة","التاريخ","الوقت","السعر","الحالة"];
-    const r=all.map(b=>[b.name,b.phone?.replace("whatsapp:",""),b.service,formatDate(b.date),b.time,b.price,b.status==="confirmed"?"مؤكد":"ملغي"]);
+    const r=all.map(b=>[
+      b.name,
+      "'" + (b.phone?.replace("whatsapp:","") || ""),
+      b.service,
+      formatDate(b.date),
+      b.time,
+      b.price,
+      b.status==="confirmed"?"مؤكد":"ملغي"
+    ]);
     const NL=String.fromCharCode(10);
     const csv=[h,...r].map(row=>row.join(",")).join(NL);
     const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
@@ -1634,4 +1642,4 @@ function Dashboard({ onLogout, role, username }) {
       </div>
     </div>
   );
-}    
+}
