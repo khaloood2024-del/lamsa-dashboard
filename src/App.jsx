@@ -379,6 +379,53 @@ function Confirm({ msg, onOk, onCancel }) {
   );
 }
 
+// ─── CLEAR ALL BOOKINGS (مدير فقط) ────────────────────────────────────
+function ClearAllModal({ username, onClose, onDone }) {
+  const [pwd, setPwd]       = useState("");
+  const [err, setErr]       = useState("");
+  const [busy, setBusy]     = useState(false);
+
+  const submit = async () => {
+    if (!pwd.trim()) return setErr("أدخل كلمة المرور للتأكيد");
+    setBusy(true); setErr("");
+    try {
+      const r = await fetch(API_URL+"/api/bookings/all", {
+        method:"DELETE",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ username, password: pwd }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setErr(data.error || "فشل الحذف"); setBusy(false); return; }
+      onDone(data.deleted || 0);
+    } catch { setErr("تعذّر الاتصال بالسيرفر"); setBusy(false); }
+  };
+
+  return (
+    <Modal title="🗑️ حذف كل الحجوزات" onClose={onClose} width={340}>
+      <p style={{color:T.red,fontSize:13,marginBottom:8,fontWeight:600,lineHeight:1.7}}>
+        تحذير: سيتم حذف جميع الحجوزات نهائياً ولا يمكن التراجع.
+      </p>
+      <p style={{color:T.textSoft,fontSize:12,marginBottom:16,lineHeight:1.7}}>
+        أدخل كلمة مرور المدير لتأكيد العملية.
+      </p>
+      <input type="password" value={pwd} autoFocus
+        onChange={e=>{setPwd(e.target.value);setErr("");}}
+        onKeyDown={e=>e.key==="Enter"&&submit()}
+        placeholder="كلمة مرور المدير"
+        style={{width:"100%",height:42,background:T.bg,border:`1.5px solid ${err?T.red:T.border}`,
+          borderRadius:8,padding:"0 12px",color:T.text,fontSize:13,outline:"none",
+          direction:"rtl",fontFamily:"inherit",marginBottom:err?6:16}}/>
+      {err&&<p style={{color:T.red,fontSize:12,marginBottom:14}}>{err}</p>}
+      <div style={{display:"flex",gap:8}}>
+        <Btn onClick={submit} variant="danger" style={{flex:1}} disabled={busy}>
+          {busy?"جارٍ الحذف…":"حذف الكل"}
+        </Btn>
+        <Btn onClick={onClose} variant="ghost" style={{flex:1}}>تراجع</Btn>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── ADD BOOKING ─────────────────────────────────────────────────────
 function AddBooking({ onClose, onAdd, services }) {
   const [form,setForm]=useState({name:"",service:services[0]?.name||"",date:"",time:"",phone:""});
@@ -720,7 +767,7 @@ function OffersPage() {
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
-function BookingsPage({ bookings, onCancel, onConfirm }) {
+function BookingsPage({ bookings, onCancel, onConfirm, isAdmin, onClearAll }) {
   const [filters, setFilters] = useState({ name:"", service:"", date:"", time:"", status:"all" });
 
   const setF = (k,v) => setFilters(p=>({...p,[k]:v}));
@@ -758,9 +805,18 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
             <option value="cancelled">ملغية</option>
           </select>
           <div style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace",textAlign:"center"}}>{visible.length}</div>
-          <button onClick={()=>setFilters({name:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
-            background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,
-            padding:"4px 8px",color:T.muted,fontSize:11,cursor:"pointer"}}>مسح</button>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <button onClick={()=>setFilters({name:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
+              background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,
+              padding:"4px 8px",color:T.muted,fontSize:11,cursor:"pointer"}}>مسح</button>
+            {isAdmin && bookings.length>0 && (
+              <button onClick={onClearAll} className="t" style={{
+                background:T.redBg,border:"1px solid #FECACA",borderRadius:6,
+                padding:"4px 8px",color:T.red,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
+                🗑️ حذف الكل
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Header */}
@@ -1375,6 +1431,7 @@ function Dashboard({ onLogout, role, username }) {
   const [syncing,   setSyncing]   = useState(false);
   const [showAdd,   setShowAdd]   = useState(false);
   const [confirm,   setConfirm]   = useState(null);
+  const [showClearAll, setShowClearAll] = useState(false);
   const [isAdmin,   setIsAdmin]   = useState(()=>role==="admin");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [services] = useAPIData("/api/services");
@@ -1439,6 +1496,8 @@ function Dashboard({ onLogout, role, username }) {
       {showAdminModal&&<AdminModal onClose={()=>setShowAdminModal(false)} onSuccess={()=>setIsAdmin(true)}/>}
       {showAdd&&<AddBooking onClose={()=>setShowAdd(false)} onAdd={addBooking} services={services}/>}
       {confirm&&<Confirm msg={`إلغاء موعد ${confirm.name}؟`} onOk={doCancel} onCancel={()=>setConfirm(null)}/>}
+      {showClearAll&&<ClearAllModal username={username} onClose={()=>setShowClearAll(false)}
+        onDone={(n)=>{setShowClearAll(false);setBookings([]);fetchB();notif(`تم حذف ${n} حجز`,"cancel");}}/>}
 
       {/* Notifications */}
       <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",
@@ -1628,7 +1687,7 @@ function Dashboard({ onLogout, role, username }) {
           </div>
         )}
 
-        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking}/>}
+        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking} isAdmin={isAdmin} onClearAll={()=>setShowClearAll(true)}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
 
