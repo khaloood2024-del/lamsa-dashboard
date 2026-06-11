@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 
 // ─── CONFIG (غيّر هنا لكل عميل) ──────────────────────────────────────
 const CONFIG = {
-  businessName: "اسم المنشأة",
-  businessType: "منشأتي",
+  businessName: "الابتسامة الجميلة",
+  businessType: "عيادة",
   primaryColor: "#2563EB",
 };
 
