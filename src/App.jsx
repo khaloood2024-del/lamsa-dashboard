@@ -101,6 +101,7 @@ const I = {
   star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
   settings:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   smile:   "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01",
+  panel:   "M3 3h18a0 0 0 0 1 0 0v18a0 0 0 0 1 0 0H3a0 0 0 0 1 0 0V3a0 0 0 0 1 0 0zM15 3v18",
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────
@@ -374,53 +375,6 @@ function Confirm({ msg, onOk, onCancel }) {
       <div style={{display:"flex",gap:8}}>
         <Btn onClick={onOk} variant="danger" style={{flex:1}}>تأكيد</Btn>
         <Btn onClick={onCancel} variant="ghost" style={{flex:1}}>تراجع</Btn>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── CLEAR ALL BOOKINGS (مدير فقط) ────────────────────────────────────
-function ClearAllModal({ username, onClose, onDone }) {
-  const [pwd, setPwd]       = useState("");
-  const [err, setErr]       = useState("");
-  const [busy, setBusy]     = useState(false);
-
-  const submit = async () => {
-    if (!pwd.trim()) return setErr("أدخل كلمة المرور للتأكيد");
-    setBusy(true); setErr("");
-    try {
-      const r = await fetch(API_URL+"/api/bookings/all", {
-        method:"DELETE",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ username, password: pwd }),
-      });
-      const data = await r.json();
-      if (!r.ok) { setErr(data.error || "فشل الحذف"); setBusy(false); return; }
-      onDone(data.deleted || 0);
-    } catch { setErr("تعذّر الاتصال بالسيرفر"); setBusy(false); }
-  };
-
-  return (
-    <Modal title="🗑️ حذف كل الحجوزات" onClose={onClose} width={340}>
-      <p style={{color:T.red,fontSize:13,marginBottom:8,fontWeight:600,lineHeight:1.7}}>
-        تحذير: سيتم حذف جميع الحجوزات نهائياً ولا يمكن التراجع.
-      </p>
-      <p style={{color:T.textSoft,fontSize:12,marginBottom:16,lineHeight:1.7}}>
-        أدخل كلمة مرور المدير لتأكيد العملية.
-      </p>
-      <input type="password" value={pwd} autoFocus
-        onChange={e=>{setPwd(e.target.value);setErr("");}}
-        onKeyDown={e=>e.key==="Enter"&&submit()}
-        placeholder="كلمة مرور المدير"
-        style={{width:"100%",height:42,background:T.bg,border:`1.5px solid ${err?T.red:T.border}`,
-          borderRadius:8,padding:"0 12px",color:T.text,fontSize:13,outline:"none",
-          direction:"rtl",fontFamily:"inherit",marginBottom:err?6:16}}/>
-      {err&&<p style={{color:T.red,fontSize:12,marginBottom:14}}>{err}</p>}
-      <div style={{display:"flex",gap:8}}>
-        <Btn onClick={submit} variant="danger" style={{flex:1}} disabled={busy}>
-          {busy?"جارٍ الحذف…":"حذف الكل"}
-        </Btn>
-        <Btn onClick={onClose} variant="ghost" style={{flex:1}}>تراجع</Btn>
       </div>
     </Modal>
   );
@@ -767,7 +721,7 @@ function OffersPage() {
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
-function BookingsPage({ bookings, onCancel, onConfirm, isAdmin, onClearAll }) {
+function BookingsPage({ bookings, onCancel, onConfirm }) {
   const [filters, setFilters] = useState({ name:"", service:"", date:"", time:"", status:"all" });
 
   const setF = (k,v) => setFilters(p=>({...p,[k]:v}));
@@ -805,18 +759,9 @@ function BookingsPage({ bookings, onCancel, onConfirm, isAdmin, onClearAll }) {
             <option value="cancelled">ملغية</option>
           </select>
           <div style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace",textAlign:"center"}}>{visible.length}</div>
-          <div style={{display:"flex",gap:6,alignItems:"center"}}>
-            <button onClick={()=>setFilters({name:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
-              background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,
-              padding:"4px 8px",color:T.muted,fontSize:11,cursor:"pointer"}}>مسح</button>
-            {isAdmin && bookings.length>0 && (
-              <button onClick={onClearAll} className="t" style={{
-                background:T.redBg,border:"1px solid #FECACA",borderRadius:6,
-                padding:"4px 8px",color:T.red,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
-                🗑️ حذف الكل
-              </button>
-            )}
-          </div>
+          <button onClick={()=>setFilters({name:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
+            background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,
+            padding:"4px 8px",color:T.muted,fontSize:11,cursor:"pointer"}}>مسح</button>
         </div>
 
         {/* Header */}
@@ -1177,17 +1122,80 @@ function UsersPage() {
 // ─── REVIEWS PAGE ────────────────────────────────────────────────
 function ReviewsPage() {
   const [reviews, , loading, refetch] = useAPIData("/api/reviews");
+  const [period, setPeriod] = useState("monthly");
 
-  const avg = reviews.length > 0
-    ? (reviews.reduce((s,r) => s + (r.rating||0), 0) / reviews.length).toFixed(1)
+  // فلترة حسب الفترة (created_at تاريخ حقيقي من قاعدة البيانات)
+  const filterByPeriod = (list) => {
+    const now = new Date();
+    return list.filter(r => {
+      if (!r.created_at) return true;
+      const d = new Date(r.created_at);
+      if (period === "daily")   return d.toDateString() === now.toDateString();
+      if (period === "weekly")  return (now - d) / (1000*60*60*24) <= 7;
+      if (period === "monthly") return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+      return true;
+    });
+  };
+
+  const visible = filterByPeriod(reviews);
+
+  const avg = visible.length > 0
+    ? (visible.reduce((s,r) => s + (r.rating||0), 0) / visible.length).toFixed(1)
     : "—";
 
-  const stars = (n) => "⭐".repeat(n) + "☆".repeat(5-n);
+  // نجوم ملونة فقط بدون النجوم الفاضية
+  const stars = (n) => "⭐".repeat(n);
+
+  // توزيع النجوم: كم تقييم لكل درجة (5..1)
+  const dist = [5,4,3,2,1].map(star => ({
+    star,
+    count: visible.filter(r => r.rating === star).length,
+  }));
+  const maxDist = Math.max(...dist.map(d=>d.count), 1);
+
+  // تصدير Excel (CSV) للتقييمات
+  const exportCSV = () => {
+    const h=["العميل","الهاتف","التقييم","التاريخ","الملاحظة"];
+    const rows=visible.map(r=>[
+      r.name||"",
+      "'"+formatPhone(r.phone),
+      r.rating||"",
+      r.created_at?new Date(r.created_at).toLocaleDateString("ar-SA"):"",
+      (r.note||"").replace(/,/g,"،"),
+    ]);
+    const NL=String.fromCharCode(10);
+    const csv=[h,...rows].map(row=>row.join(",")).join(NL);
+    const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="تقييمات-العملاء.csv";a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="fu">
+      {/* Period filter + Export */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+        <div style={{display:"flex",background:T.surface,border:"1.5px solid "+T.border,borderRadius:10,padding:3}}>
+          {[{id:"daily",l:"يومي"},{id:"weekly",l:"أسبوعي"},{id:"monthly",l:"شهري"}].map(p=>(
+            <button key={p.id} onClick={()=>setPeriod(p.id)} className="t" style={{
+              padding:"6px 16px",borderRadius:7,border:"none",cursor:"pointer",
+              fontFamily:"inherit",fontSize:12,
+              background:period===p.id?T.accent:"transparent",
+              color:period===p.id?"#fff":T.textSoft,fontWeight:period===p.id?600:400}}>
+              {p.l}
+            </button>
+          ))}
+        </div>
+        <button onClick={exportCSV} className="t" style={{
+          display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+          background:T.surface,border:"1.5px solid "+T.border,borderRadius:8,
+          color:T.green,fontFamily:"inherit",fontSize:12,cursor:"pointer"}}>
+          <Ico d={I.dl} size={13} color={T.green}/> Excel
+        </button>
+      </div>
+
       {/* Summary */}
-      <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14, marginBottom:22}}>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:14, marginBottom:16}}>
         <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
           borderRadius:14,padding:20,borderTop:`3px solid ${T.amber}`,textAlign:"center"}}>
           <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>متوسط التقييم</div>
@@ -1197,15 +1205,31 @@ function ReviewsPage() {
         <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
           borderRadius:14,padding:20,borderTop:`3px solid ${T.accent}`,textAlign:"center"}}>
           <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>إجمالي التقييمات</div>
-          <div style={{fontSize:32,fontWeight:700,color:T.accent,fontFamily:"'DM Mono',monospace"}}>{reviews.length}</div>
+          <div style={{fontSize:32,fontWeight:700,color:T.accent,fontFamily:"'DM Mono',monospace"}}>{visible.length}</div>
         </div>
         <div className="hover-lift" style={{background:T.surface,border:`1.5px solid ${T.border}`,
           borderRadius:14,padding:20,borderTop:`3px solid ${T.green}`,textAlign:"center"}}>
           <div style={{color:T.muted,fontSize:11,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:0.8}}>مع ملاحظات</div>
           <div style={{fontSize:32,fontWeight:700,color:T.green,fontFamily:"'DM Mono',monospace"}}>
-            {reviews.filter(r=>r.note).length}
+            {visible.filter(r=>r.note).length}
           </div>
         </div>
+      </div>
+
+      {/* توزيع النجوم */}
+      <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,padding:"18px 20px",marginBottom:16}}>
+        <div style={{color:T.text,fontWeight:600,fontSize:13,marginBottom:14}}>توزيع التقييمات</div>
+        {dist.map(d=>(
+          <div key={d.star} style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+            <span style={{color:T.textSoft,fontSize:12,width:40,fontFamily:"'DM Mono',monospace"}}>{d.star} ⭐</span>
+            <div style={{flex:1,height:8,background:T.bg,borderRadius:4}}>
+              <div style={{height:"100%",borderRadius:4,
+                width:Math.round((d.count/maxDist)*100)+"%",
+                background:`linear-gradient(90deg,${T.amber}70,${T.amber})`,transition:"width 1s ease"}}/>
+            </div>
+            <span style={{color:T.muted,fontSize:11,width:30,textAlign:"left",fontFamily:"'DM Mono',monospace"}}>{d.count}</span>
+          </div>
+        ))}
       </div>
 
       {/* Reviews table */}
@@ -1213,7 +1237,7 @@ function ReviewsPage() {
         <div style={{padding:"14px 20px",borderBottom:`1.5px solid ${T.border}`,
           display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{color:T.text,fontWeight:600,fontSize:13}}>التقييمات</span>
-          <span style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace"}}>{reviews.length} تقييم</span>
+          <span style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace"}}>{visible.length} تقييم</span>
         </div>
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 0.6fr 1fr 1.5fr",
@@ -1225,12 +1249,12 @@ function ReviewsPage() {
 
         {loading
           ?<div style={{padding:30,textAlign:"center",color:T.muted}}>جاري التحميل...</div>
-          :reviews.length===0
+          :visible.length===0
           ?<div style={{padding:40,textAlign:"center",color:T.muted,fontSize:13}}>
             <div style={{fontSize:32,marginBottom:8,opacity:0.3}}>⭐</div>
-            لا توجد تقييمات بعد
+            لا توجد تقييمات في هذه الفترة
           </div>
-          :reviews.map(r=>(
+          :visible.map(r=>(
             <div key={r.id} className="row-h" style={{display:"grid",gridTemplateColumns:"1fr 0.6fr 1fr 1.5fr",
               alignItems:"center",padding:"13px 20px",borderBottom:`1px solid ${T.border}80`,background:T.surface}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1240,7 +1264,7 @@ function ReviewsPage() {
                   <div style={{color:T.muted,fontSize:11}}>{formatPhone(r.phone)}</div>
                 </div>
               </div>
-              <div style={{fontSize:16}}>{r.rating ? stars(r.rating) : "—"}</div>
+              <div style={{fontSize:16,whiteSpace:"nowrap"}}>{r.rating ? stars(r.rating) : "—"}</div>
               <div style={{color:T.muted,fontSize:12}}>
                 {new Date(r.created_at).toLocaleDateString("ar-SA",{year:"numeric",month:"short",day:"numeric"})}
               </div>
@@ -1431,9 +1455,9 @@ function Dashboard({ onLogout, role, username }) {
   const [syncing,   setSyncing]   = useState(false);
   const [showAdd,   setShowAdd]   = useState(false);
   const [confirm,   setConfirm]   = useState(null);
-  const [showClearAll, setShowClearAll] = useState(false);
   const [isAdmin,   setIsAdmin]   = useState(()=>role==="admin");
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [collapsed,  setCollapsed]  = useState(false);
   const [services] = useAPIData("/api/services");
 
   const notif = (msg,type="success") => {
@@ -1496,8 +1520,6 @@ function Dashboard({ onLogout, role, username }) {
       {showAdminModal&&<AdminModal onClose={()=>setShowAdminModal(false)} onSuccess={()=>setIsAdmin(true)}/>}
       {showAdd&&<AddBooking onClose={()=>setShowAdd(false)} onAdd={addBooking} services={services}/>}
       {confirm&&<Confirm msg={`إلغاء موعد ${confirm.name}؟`} onOk={doCancel} onCancel={()=>setConfirm(null)}/>}
-      {showClearAll&&<ClearAllModal username={username} onClose={()=>setShowClearAll(false)}
-        onDone={(n)=>{setShowClearAll(false);setBookings([]);fetchB();notif(`تم حذف ${n} حجز`,"cancel");}}/>}
 
       {/* Notifications */}
       <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",
@@ -1514,19 +1536,33 @@ function Dashboard({ onLogout, role, username }) {
       </div>
 
       {/* Sidebar */}
-      <div style={{width:220,background:T.sidebar,display:"flex",flexDirection:"column",
+      <div style={{width:collapsed?64:220,background:T.sidebar,display:"flex",flexDirection:"column",
         position:"fixed",top:0,right:0,height:"100vh",zIndex:100,
-        borderLeft:"1px solid rgba(255,255,255,0.05)"}}>
-        <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:38,height:38,borderRadius:10,
-              background:`linear-gradient(135deg,${T.accent},${T.accent}AA)`,
-              display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,
-              boxShadow:`0 4px 12px ${T.accent}50`}}>🏢</div>
-            <div>
-              <div style={{color:"#F1F5F9",fontWeight:700,fontSize:14,lineHeight:1.2}}>{CONFIG.businessName}</div>
-              <div style={{color:T.sideMuted,fontSize:10,marginTop:2}}>{CONFIG.businessType}</div>
-            </div>
+        borderLeft:"1px solid rgba(255,255,255,0.05)",
+        transition:"width 0.25s cubic-bezier(.4,0,.2,1)",overflow:"hidden"}}>
+        <div style={{padding:collapsed?"16px 12px":"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,
+            justifyContent:collapsed?"center":"space-between"}}>
+            {!collapsed&&(
+              <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+                <div style={{width:38,height:38,borderRadius:10,flexShrink:0,
+                  background:`linear-gradient(135deg,${T.accent},${T.accent}AA)`,
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,
+                  boxShadow:`0 4px 12px ${T.accent}50`}}>🏢</div>
+                <div style={{minWidth:0}}>
+                  <div style={{color:"#F1F5F9",fontWeight:700,fontSize:14,lineHeight:1.2,
+                    whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{CONFIG.businessName}</div>
+                  <div style={{color:T.sideMuted,fontSize:10,marginTop:2,whiteSpace:"nowrap"}}>{CONFIG.businessType}</div>
+                </div>
+              </div>
+            )}
+            <button onClick={()=>setCollapsed(!collapsed)} className="nav-h t"
+              title={collapsed?"توسيع القائمة":"تصغير القائمة"}
+              style={{width:32,height:32,borderRadius:8,border:"none",cursor:"pointer",
+                background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",
+                justifyContent:"center",color:T.sideMuted,flexShrink:0}}>
+              <Ico d={I.panel} size={15} color={T.sideMuted}/>
+            </button>
           </div>
         </div>
 
@@ -1535,62 +1571,89 @@ function Dashboard({ onLogout, role, username }) {
             <button key={t.id} className="nav-h t" onClick={()=>{
               if(t.admin&&!isAdmin){setShowAdminModal(true);return;}
               setTab(t.id);
-            }} style={{
-              display:"flex",alignItems:"center",gap:9,padding:"9px 10px",
+            }} title={collapsed?t.label:undefined} style={{
+              display:"flex",alignItems:"center",gap:collapsed?0:9,
+              padding:collapsed?"10px 0":"9px 10px",
+              justifyContent:collapsed?"center":"flex-start",
               borderRadius:8,border:"none",textAlign:"right",cursor:"pointer",
               background:tab===t.id?`${T.accent}25`:"transparent",
               color:tab===t.id?"#fff":T.sideText,
               fontFamily:"inherit",fontSize:13,fontWeight:tab===t.id?600:400,
-              borderRight:`3px solid ${tab===t.id?T.accent:"transparent"}`}}>
-              <Ico d={t.icon} size={15} color={tab===t.id?T.accent:T.sideMuted}/>
-              {t.label}
-              {t.admin&&!isAdmin&&<Ico d={I.lock} size={10} color={T.sideMuted}/>}
+              borderRight:`3px solid ${tab===t.id?T.accent:"transparent"}`,
+              position:"relative"}}>
+              <Ico d={t.icon} size={collapsed?17:15} color={tab===t.id?T.accent:T.sideMuted}/>
+              {!collapsed&&t.label}
+              {!collapsed&&t.admin&&!isAdmin&&<Ico d={I.lock} size={10} color={T.sideMuted}/>}
               {t.id==="bookings"&&pending.length>0&&(
-                <span style={{marginRight:"auto",background:`${T.accent}30`,color:T.accent,
-                  fontSize:10,padding:"1px 6px",borderRadius:6,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{pending.length}</span>
+                collapsed
+                  ?<span style={{position:"absolute",top:4,left:8,width:8,height:8,
+                    borderRadius:"50%",background:T.accent}}/>
+                  :<span style={{marginRight:"auto",background:`${T.accent}30`,color:T.accent,
+                    fontSize:10,padding:"1px 6px",borderRadius:6,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{pending.length}</span>
               )}
             </button>
           ))}
         </nav>
 
         <div style={{padding:"10px 8px",borderTop:"1px solid rgba(255,255,255,0.08)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 10px",
-            background:"rgba(255,255,255,0.05)",borderRadius:8,marginBottom:6}}>
-            <Avatar name={username} role={isAdmin?"admin":"staff"} size={30}/>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{color:"#F1F5F9",fontSize:12,fontWeight:500,
-                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{username||"مستخدم"}</div>
-              <div style={{color:T.sideMuted,fontSize:10}}>{isAdmin?"مدير":"موظف"}</div>
+          {collapsed ? (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+              <Avatar name={username} role={isAdmin?"admin":"staff"} size={32}/>
+              <button onClick={fetchB} disabled={syncing} className="t" title="تحديث" style={{
+                width:34,height:30,display:"flex",alignItems:"center",justifyContent:"center",
+                background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:7,cursor:"pointer"}}>
+                <Ico d={I.refresh} size={13} color={T.sideMuted}/>
+              </button>
+              <button onClick={onLogout} className="t" title="خروج" style={{
+                width:34,height:30,display:"flex",alignItems:"center",justifyContent:"center",
+                background:"rgba(220,38,38,0.12)",border:"1px solid rgba(220,38,38,0.2)",
+                borderRadius:7,cursor:"pointer"}}>
+                <Ico d={I.out} size={13} color="#FCA5A5"/>
+              </button>
             </div>
-          </div>
-          <div style={{display:"flex",gap:5}}>
-            <button onClick={fetchB} disabled={syncing} className="t" style={{
-              flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,
-              padding:"7px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
-              borderRadius:7,color:T.sideText,fontFamily:"inherit",fontSize:11,cursor:"pointer"}}>
-              <Ico d={I.refresh} size={12} color={T.sideMuted}
-                style={{animation:syncing?"spin 1s linear infinite":"none"}}/>
-              {syncing?"...":"تحديث"}
-            </button>
-            <button onClick={onLogout} className="t" style={{
-              flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,
-              padding:"7px",background:"rgba(220,38,38,0.12)",border:"1px solid rgba(220,38,38,0.2)",
-              borderRadius:7,color:"#FCA5A5",fontFamily:"inherit",fontSize:11,cursor:"pointer"}}>
-              <Ico d={I.out} size={12} color="#FCA5A5"/> خروج
-            </button>
-          </div>
-          {lastSync&&(
-            <div style={{textAlign:"center",color:T.sideMuted,fontSize:10,marginTop:6,
-              display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-              <div style={{width:5,height:5,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite"}}/>
-              {lastSync.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}
-            </div>
+          ) : (
+            <>
+              <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 10px",
+                background:"rgba(255,255,255,0.05)",borderRadius:8,marginBottom:6}}>
+                <Avatar name={username} role={isAdmin?"admin":"staff"} size={30}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{color:"#F1F5F9",fontSize:12,fontWeight:500,
+                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{username||"مستخدم"}</div>
+                  <div style={{color:T.sideMuted,fontSize:10}}>{isAdmin?"مدير":"موظف"}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:5}}>
+                <button onClick={fetchB} disabled={syncing} className="t" style={{
+                  flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,
+                  padding:"7px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
+                  borderRadius:7,color:T.sideText,fontFamily:"inherit",fontSize:11,cursor:"pointer"}}>
+                  <Ico d={I.refresh} size={12} color={T.sideMuted}
+                    style={{animation:syncing?"spin 1s linear infinite":"none"}}/>
+                  {syncing?"...":"تحديث"}
+                </button>
+                <button onClick={onLogout} className="t" style={{
+                  flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,
+                  padding:"7px",background:"rgba(220,38,38,0.12)",border:"1px solid rgba(220,38,38,0.2)",
+                  borderRadius:7,color:"#FCA5A5",fontFamily:"inherit",fontSize:11,cursor:"pointer"}}>
+                  <Ico d={I.out} size={12} color="#FCA5A5"/> خروج
+                </button>
+              </div>
+              {lastSync&&(
+                <div style={{textAlign:"center",color:T.sideMuted,fontSize:10,marginTop:6,
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <div style={{width:5,height:5,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite"}}/>
+                  {lastSync.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div style={{marginRight:220,flex:1,padding:"24px 28px",minHeight:"100vh"}}>
+      <div style={{marginRight:collapsed?64:220,flex:1,padding:"24px 28px",minHeight:"100vh",
+        transition:"margin-right 0.25s cubic-bezier(.4,0,.2,1)"}}>
         {/* Topbar */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
           <div>
@@ -1687,7 +1750,7 @@ function Dashboard({ onLogout, role, username }) {
           </div>
         )}
 
-        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking} isAdmin={isAdmin} onClearAll={()=>setShowClearAll(true)}/>}
+        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
 
