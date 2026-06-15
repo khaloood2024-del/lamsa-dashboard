@@ -9,6 +9,29 @@ const CONFIG = {
 
 const API_URL = "https://lamsa-salon-server-production.up.railway.app";
 
+// ─── المصادقة (token) ─────────────────────────────────────────────
+const tokenStore = {
+  get:   ()   => sessionStorage.getItem("lamsa_token"),
+  role:  ()   => sessionStorage.getItem("lamsa_role") || "staff",
+  user:  ()   => sessionStorage.getItem("lamsa_user") || "",
+  set:   (t,r,u) => { sessionStorage.setItem("lamsa_token",t); sessionStorage.setItem("lamsa_role",r); sessionStorage.setItem("lamsa_user",u); },
+  clear: ()   => sessionStorage.clear(),
+};
+
+// fetch مغلّف: يرفق Authorization تلقائياً ويسجّل الخروج عند انتهاء الجلسة
+async function apiFetch(path, opts = {}) {
+  const t = tokenStore.get();
+  const headers = { ...(opts.headers || {}), ...(t ? { Authorization: "Bearer " + t } : {}) };
+  const res = await fetch(API_URL + path, { ...opts, headers });
+  // 401 على أي endpoint غير تسجيل الدخول = جلسة منتهية → خروج
+  if (res.status === 401 && !path.startsWith("/api/login")) {
+    tokenStore.clear();
+    window.location.reload();
+    throw new Error("unauthorized");
+  }
+  return res;
+}
+
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────
 const C = CONFIG.primaryColor;
 const T = {
@@ -254,12 +277,12 @@ function LoginScreen({ onLogin }) {
     if (!pwd.trim())  return setError("أدخل كلمة المرور");
     setLoading(true); setError("");
     try {
-      const res  = await fetch(API_URL+"/api/login", { method:"POST",
+      const res  = await apiFetch("/api/login", { method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ username:user.trim(), password:pwd }) });
       const data = await res.json();
       if (!res.ok) { setError(data.error||"بيانات غير صحيحة"); setShake(true); setTimeout(()=>setShake(false),500); }
-      else onLogin(data.role, data.username);
+      else onLogin(data.role, data.username, data.token);
     } catch { setError("تعذر الاتصال بالسيرفر"); }
     finally { setLoading(false); }
   };
@@ -339,25 +362,36 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-// ─── ADMIN MODAL ─────────────────────────────────────────────────────
+// ─── ADMIN MODAL (تسجيل دخول مدير فعلي يبدّل التوكن) ─────────────────
 function AdminModal({ onClose, onSuccess }) {
-  const [pwd,loading,error,setP,setE] = [useState(""),useState(false),useState(false),x=>x,x=>x];
-  const [p,setP2]=useState(""); const [ld,setLd]=useState(false); const [er,setEr]=useState(false);
+  const [u,setU]=useState(""); const [p,setP]=useState("");
+  const [ld,setLd]=useState(false); const [er,setEr]=useState(false);
   const handle = async()=>{
+    if(!u.trim()||!p.trim()){ setEr(true); return; }
     setLd(true);
-    try{ const r=await fetch(API_URL+"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:"مدير",password:p})});
-      if(r.ok){onSuccess();onClose();}else setEr(true);
+    try{
+      const r=await apiFetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username:u.trim(),password:p})});
+      const data=await r.json();
+      if(r.ok && data.role==="admin"){
+        tokenStore.set(data.token, data.role, data.username);  // بدّل لتوكن المدير
+        onSuccess(); onClose();
+      } else setEr(true);
     }catch{setEr(true);}finally{setLd(false);}
   };
   return (
     <Modal title="🔒 صلاحية المدير" onClose={onClose} width={340}>
       <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:16}}>
-        <Lbl label="كلمة مرور المدير">
-          <input type="password" value={p} onChange={e=>{setP2(e.target.value);setEr(false);}}
-            onKeyDown={e=>e.key==="Enter"&&handle()} placeholder="كلمة المرور"
-            style={inp(er)} autoFocus onFocus={fIn} onBlur={fOut(er)}/>
+        <Lbl label="اسم مستخدم المدير">
+          <input value={u} onChange={e=>{setU(e.target.value);setEr(false);}}
+            placeholder="اسم المستخدم" style={inp(er)} autoFocus onFocus={fIn} onBlur={fOut(er)}/>
         </Lbl>
-        {er&&<div style={{color:T.red,fontSize:12}}>كلمة المرور غير صحيحة</div>}
+        <Lbl label="كلمة مرور المدير">
+          <input type="password" value={p} onChange={e=>{setP(e.target.value);setEr(false);}}
+            onKeyDown={e=>e.key==="Enter"&&handle()} placeholder="كلمة المرور"
+            style={inp(er)} onFocus={fIn} onBlur={fOut(er)}/>
+        </Lbl>
+        {er&&<div style={{color:T.red,fontSize:12}}>بيانات المدير غير صحيحة</div>}
       </div>
       <div style={{display:"flex",gap:8}}>
         <Btn onClick={handle} disabled={ld} style={{flex:1}}>{ld?"...":"دخول"}</Btn>
@@ -445,7 +479,7 @@ function useAPIData(endpoint) {
   const [data,    setData]    = useState([]);
   const [loading, setLoading] = useState(true);
   const refetch = async () => {
-    try { const r=await fetch(API_URL+endpoint); setData(await r.json()); }
+    try { const r=await apiFetch(endpoint); setData(await r.json()); }
     catch {} finally { setLoading(false); }
   };
   useEffect(()=>{ refetch(); },[]);
@@ -481,7 +515,7 @@ function ServicesPage() {
   };
 
   const del = async(id)=>{
-    await fetch(API_URL+"/api/services/"+id,{method:"DELETE"});
+    await apiFetch("/api/services/"+id,{method:"DELETE"});
     await refetch(); setConfirmDel(null);
   };
 
@@ -613,7 +647,7 @@ function OffersPage() {
 
   return (
     <div className="fu">
-      {confirmDel && <Confirm msg={`حذف عرض "${confirmDel.name}"؟`} onOk={async()=>{ await fetch(API_URL+"/api/offers/"+confirmDel.id,{method:"DELETE"}); await refetch(); setConfirmDel(null); }} onCancel={()=>setConfirmDel(null)}/>}
+      {confirmDel && <Confirm msg={`حذف عرض "${confirmDel.name}"؟`} onOk={async()=>{ await apiFetch("/api/offers/"+confirmDel.id,{method:"DELETE"}); await refetch(); setConfirmDel(null); }} onCancel={()=>setConfirmDel(null)}/>}
       {showForm && (
         <Modal title={editItem?"تعديل العرض":"إضافة عرض جديد"} onClose={()=>setShowForm(false)} width={420}>
           <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:16}}>
@@ -1023,7 +1057,7 @@ function UsersPage() {
   const [saving,   setSaving]   = useState(false);
   const [showPwd,  setShowPwd]  = useState(false);
 
-  const fetchU = async()=>{ try{const r=await fetch(API_URL+"/api/users");setUsers(await r.json());}catch{}finally{setLoading(false);} };
+  const fetchU = async()=>{ try{const r=await apiFetch("/api/users");setUsers(await r.json());}catch{}finally{setLoading(false);} };
   useEffect(()=>{fetchU();},[]);
 
   const openAdd  = ()=>{ setForm({username:"",password:"",role:"staff"}); setEditUser(null); setFormErr(""); setShowPwd(false); setShowForm(true); };
@@ -1042,7 +1076,7 @@ function UsersPage() {
     }catch{setFormErr("تعذر الاتصال");}finally{setSaving(false);}
   };
 
-  const del = async(u)=>{ if(!window.confirm("حذف "+u.username+"؟")) return; await fetch(API_URL+"/api/users/"+u.id,{method:"DELETE"}); fetchU(); };
+  const del = async(u)=>{ if(!window.confirm("حذف "+u.username+"؟")) return; await apiFetch("/api/users/"+u.id,{method:"DELETE"}); fetchU(); };
 
   return (
     <div className="fu">
@@ -1295,7 +1329,7 @@ function SettingsPage() {
   const [error,    setError]    = useState("");
 
   useEffect(()=>{
-    fetch(API_URL+"/api/settings")
+    apiFetch("/api/settings")
       .then(r=>r.json())
       .then(d=>{ setSettings(s=>({...s,...d})); setLoading(false); })
       .catch(()=>setLoading(false));
@@ -1304,7 +1338,7 @@ function SettingsPage() {
   const handleSave = async()=>{
     setSaving(true); setError(""); setSaved(false);
     try {
-      const res = await fetch(API_URL+"/api/settings",{
+      const res = await apiFetch("/api/settings",{
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify(settings),
       });
@@ -1434,17 +1468,19 @@ function SettingsInner({ settings, setSettings, saving, saved, error, handleSave
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(()=>window.location.hash.startsWith("#auth"));
-  const [userRole, setUserRole] = useState(()=>window.location.hash.includes("admin")?"admin":"staff");
-  const [username, setUsername] = useState(()=>decodeURIComponent(window.location.hash.split("-")[2]||""));
+  const [session, setSession] = useState(() => {
+    const token = tokenStore.get();
+    return token ? { token, role: tokenStore.role(), username: tokenStore.user() } : null;
+  });
 
-  const handleLogin = (role, uname) => {
-    window.location.hash = "#auth-"+role+"-"+encodeURIComponent(uname);
-    setUserRole(role); setUsername(uname); setLoggedIn(true);
+  const handleLogin = (role, uname, token) => {
+    tokenStore.set(token, role, uname);
+    setSession({ token, role, username: uname });
   };
+  const handleLogout = () => { tokenStore.clear(); window.location.reload(); };
 
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
-  return <Dashboard onLogout={()=>{window.location.hash="";window.location.reload();}} role={userRole} username={username}/>;
+  if (!session) return <LoginScreen onLogin={handleLogin}/>;
+  return <Dashboard onLogout={handleLogout} role={session.role} username={session.username}/>;
 }
 
 function Dashboard({ onLogout, role, username }) {
@@ -1467,20 +1503,20 @@ function Dashboard({ onLogout, role, username }) {
 
   const fetchB = useCallback(async()=>{
     setSyncing(true);
-    try{const r=await fetch(API_URL+"/api/bookings");setBookings(await r.json());setLastSync(new Date());}
+    try{const r=await apiFetch("/api/bookings");setBookings(await r.json());setLastSync(new Date());}
     catch{}finally{setSyncing(false);}
   },[]);
 
   useEffect(()=>{fetchB();const i=setInterval(fetchB,30000);return()=>clearInterval(i);},[fetchB]);
 
   useEffect(()=>{
-    const es=new EventSource(API_URL+"/api/events");
+    const es=new EventSource(API_URL+"/api/events?token="+encodeURIComponent(tokenStore.get()||""));
     es.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==="new_booking"){fetchB();notif("حجز جديد — "+d.name);}}catch{}};
     es.onerror=()=>es.close();return()=>es.close();
   },[fetchB]);
 
   const confirmBooking = async(id) => {
-    try { await fetch(API_URL+"/api/bookings/"+id+"/confirm",{method:"PATCH"}); }
+    try { await apiFetch("/api/bookings/"+id+"/confirm",{method:"PATCH"}); }
     catch {}
     setBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b));
     notif("✅ تم تأكيد الموعد","success");
@@ -1489,12 +1525,12 @@ function Dashboard({ onLogout, role, username }) {
   const doCancel = async()=>{
     const{id}=confirm; setConfirm(null);
     const cancelledAt = new Date().toISOString();
-    try{await fetch(API_URL+"/api/bookings/"+id+"/cancel",{method:"PATCH"});}catch{}
+    try{await apiFetch("/api/bookings/"+id+"/cancel",{method:"PATCH"});}catch{}
     setBookings(p=>p.map(b=>b.id===id?{...b,status:"cancelled",cancelledAt}:b));
     notif("تم إلغاء الموعد","cancel");
   };
   const addBooking = async(b)=>{
-    try{await fetch(API_URL+"/api/bookings/manual",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});fetchB();}
+    try{await apiFetch("/api/bookings/manual",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});fetchB();}
     catch{setBookings(p=>[b,...p]);}
     notif("تم إضافة الحجز","success");
   };
