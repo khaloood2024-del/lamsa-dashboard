@@ -509,9 +509,9 @@ function ServicesPage() {
     if(!form.price||isNaN(Number(form.price))) return setFormErr("السعر يجب أن يكون رقماً");
     setSaving(true);
     try {
-      const url    = editItem ? API_URL+"/api/services/"+editItem.id : API_URL+"/api/services";
+      const path   = editItem ? "/api/services/"+editItem.id : "/api/services";
       const method = editItem ? "PATCH" : "POST";
-      const res    = await fetch(url,{method,headers:{"Content-Type":"application/json"},
+      const res    = await apiFetch(path,{method,headers:{"Content-Type":"application/json"},
         body:JSON.stringify({...form,price:Number(form.price)})});
       if(!res.ok){ const d=await res.json(); return setFormErr(d.error||"حدث خطأ"); }
       await refetch(); setShowForm(false);
@@ -640,9 +640,9 @@ function OffersPage() {
     if(!form.price||isNaN(Number(form.price))) return setFormErr("السعر يجب أن يكون رقماً");
     setSaving(true);
     try {
-      const url    = editItem ? API_URL+"/api/offers/"+editItem.id : API_URL+"/api/offers";
+      const path   = editItem ? "/api/offers/"+editItem.id : "/api/offers";
       const method = editItem ? "PATCH" : "POST";
-      const res    = await fetch(url,{method,headers:{"Content-Type":"application/json"},
+      const res    = await apiFetch(path,{method,headers:{"Content-Type":"application/json"},
         body:JSON.stringify({...form,price:Number(form.price),discount:Number(form.discount)||0})});
       if(!res.ok){ const d=await res.json(); return setFormErr(d.error||"حدث خطأ"); }
       await refetch(); setShowForm(false);
@@ -1120,8 +1120,8 @@ function UsersPage() {
     if(!editUser&&!form.password.trim()) return setFormErr("كلمة المرور مطلوبة");
     setSaving(true);
     try{
-      const url=editUser?API_URL+"/api/users/"+editUser.id:API_URL+"/api/users";
-      const res=await fetch(url,{method:editUser?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
+      const path=editUser?"/api/users/"+editUser.id:"/api/users";
+      const res=await apiFetch(path,{method:editUser?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
       const d=await res.json();
       if(!res.ok) return setFormErr(d.error||"حدث خطأ");
       await fetchU(); setShowForm(false);
