@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 
-// ─── CONFIG (غيّر هنا لكل عميل) ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+//  CONFIG — كل ما يتغيّر لكل عميل في هذا المكان فقط
+// ════════════════════════════════════════════════════════════════
 const CONFIG = {
-  businessName: "الابتسامة الجميلة",
-  businessType: "عيادة",
-  primaryColor: "#2563EB",
+  businessName: "الابتسامة الجميلة",                                   // اسم المنشأة الظاهر في الداشبورد
+  businessType: "عيادة",                                               // عيادة / صالون / فندق / مركز ...
+  primaryColor: "#2563EB",                                             // اللون الأساسي (hex)
+  apiUrl:       "https://lamsa-salon-server-production.up.railway.app", // رابط سيرفر Railway لهذا العميل (بدون / في النهاية)
 };
 
-const API_URL = "https://lamsa-salon-server-production.up.railway.app";
+const API_URL = CONFIG.apiUrl;
+document.title = CONFIG.businessName + " — لوحة التحكم";
 
 // ─── المصادقة (token) ─────────────────────────────────────────────
 const tokenStore = {
@@ -755,13 +759,49 @@ function OffersPage() {
 }
 
 // ─── BOOKINGS TABLE ───────────────────────────────────────────────────
-function BookingsPage({ bookings, onCancel, onConfirm }) {
-  const [filters, setFilters] = useState({ name:"", service:"", date:"", time:"", status:"all" });
+// ─── نافذة حذف كل الحجوزات (للمدير، بإعادة إدخال كلمة المرور) ──────────
+function DeleteAllModal({ onClose, onDone }) {
+  const [p,setP]=useState(""); const [ld,setLd]=useState(false); const [er,setEr]=useState("");
+  const handle = async()=>{
+    if(!p.trim()){ setEr("أدخل كلمة المرور"); return; }
+    setLd(true);
+    try{
+      const r=await apiFetch("/api/bookings/all",{method:"DELETE",
+        headers:{"Content-Type":"application/json"},body:JSON.stringify({password:p})});
+      const data=await r.json().catch(()=>({}));
+      if(r.ok){ onDone(data.deleted); onClose(); }
+      else setEr(data.error||"فشل الحذف");
+    }catch{ setEr("تعذّر الاتصال بالخادم"); }
+    finally{ setLd(false); }
+  };
+  return (
+    <Modal title="🗑️ حذف كل الحجوزات" onClose={onClose} width={360}>
+      <div style={{marginBottom:14,color:T.textSoft,fontSize:13,lineHeight:1.8}}>
+        هذا الإجراء يحذف <b style={{color:T.red}}>جميع</b> الحجوزات نهائياً ولا يمكن التراجع عنه.
+        أدخل كلمة مرور المدير للتأكيد.
+      </div>
+      <input type="password" value={p} onChange={e=>{setP(e.target.value);setEr("");}}
+        onKeyDown={e=>e.key==="Enter"&&handle()} placeholder="كلمة مرور المدير"
+        style={inp(!!er)} autoFocus onFocus={fIn} onBlur={fOut(!!er)}/>
+      {er&&<div style={{color:T.red,fontSize:12,marginTop:6}}>{er}</div>}
+      <div style={{display:"flex",gap:8,marginTop:16}}>
+        <Btn onClick={handle} disabled={ld} variant="danger" style={{flex:1}}>{ld?"...":"حذف الكل نهائياً"}</Btn>
+        <Btn onClick={onClose} variant="ghost" style={{flex:1}}>إلغاء</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function BookingsPage({ bookings, onCancel, onConfirm, isAdmin, onRefetch }) {
+  const [filters, setFilters] = useState({ name:"", phone:"", service:"", date:"", time:"", status:"all" });
+  const [showDelAll, setShowDelAll] = useState(false);
 
   const setF = (k,v) => setFilters(p=>({...p,[k]:v}));
+  const onlyDigits = s => (s||"").replace(/\D/g,"");
 
   const visible = filterBookings(bookings).filter(b=>{
     if(filters.name    && !b.name?.includes(filters.name))     return false;
+    if(filters.phone   && !onlyDigits(formatPhone(b.phone)).includes(onlyDigits(filters.phone))) return false;
     if(filters.service && !b.service?.includes(filters.service))return false;
     if(filters.date    && !b.date?.includes(filters.date))     return false;
     if(filters.time    && !b.time?.includes(filters.time))     return false;
@@ -775,12 +815,23 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
 
   return (
     <div className="fu">
+      {isAdmin && (
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
+          <button onClick={()=>setShowDelAll(true)} className="t" style={{
+            background:T.redBg,border:"1px solid #FECACA",borderRadius:8,
+            padding:"7px 14px",color:T.red,fontSize:12,fontWeight:600,cursor:"pointer"}}>
+            🗑️ حذف كل الحجوزات
+          </button>
+        </div>
+      )}
       <div style={{background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:14,overflow:"hidden"}}>
         {/* Filter row */}
-        <div style={{display:"grid",gridTemplateColumns:"1.2fr 0.9fr 1.1fr 0.8fr 0.8fr 0.6fr auto",
+        <div style={{display:"grid",gridTemplateColumns:"1.1fr 1fr 0.9fr 1fr 0.7fr 0.7fr 0.5fr auto",
           gap:8,padding:"10px 16px",background:T.bg,borderBottom:`1.5px solid ${T.border}`,alignItems:"center"}}>
           <input style={fi} value={filters.name} onChange={e=>setF("name",e.target.value)}
             placeholder="🔍 اسم العميل" onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+          <input style={fi} value={filters.phone} onChange={e=>setF("phone",e.target.value)}
+            placeholder="📱 رقم الجوال" inputMode="tel" onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
           <input style={fi} value={filters.service} onChange={e=>setF("service",e.target.value)}
             placeholder="الخدمة" onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
           <input style={fi} value={filters.date} onChange={e=>setF("date",e.target.value)}
@@ -793,7 +844,7 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
             <option value="cancelled">ملغية</option>
           </select>
           <div style={{color:T.muted,fontSize:11,fontFamily:"'DM Mono',monospace",textAlign:"center"}}>{visible.length}</div>
-          <button onClick={()=>setFilters({name:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
+          <button onClick={()=>setFilters({name:"",phone:"",service:"",date:"",time:"",status:"all"})} className="t" style={{
             background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,
             padding:"4px 8px",color:T.muted,fontSize:11,cursor:"pointer"}}>مسح</button>
         </div>
@@ -814,7 +865,7 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
           :visible.map(b=>{
             const sm={confirmed:{label:"مؤكد",type:"confirmed"},cancelled:{label:"ملغي",type:"cancelled"},pending:{label:"معلق",type:"pending"}};
             const s=sm[b.status]||sm.confirmed;
-            const phone=b.phone?.replace("whatsapp:","") || "";
+            const phone=formatPhone(b.phone) || "";
             return(
               <div key={b.id} className="row-h" style={{display:"grid",gridTemplateColumns:"1.2fr 0.7fr 1.1fr 0.8fr 1fr 0.7fr auto",
                 alignItems:"center",padding:"12px 16px",borderBottom:`1px solid ${T.border}80`,background:T.surface}}>
@@ -847,6 +898,7 @@ function BookingsPage({ bookings, onCancel, onConfirm }) {
           })
         }
       </div>
+      {showDelAll && <DeleteAllModal onClose={()=>setShowDelAll(false)} onDone={()=>onRefetch&&onRefetch()}/>}
     </div>
   );
 }
@@ -1786,7 +1838,7 @@ function Dashboard({ onLogout, role, username }) {
           </div>
         )}
 
-        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking}/>}
+        {tab==="bookings" && <BookingsPage bookings={bookings} onCancel={cancelBooking} onConfirm={confirmBooking} isAdmin={isAdmin} onRefetch={fetchB}/>}
         {tab==="services" && <ServicesPage/>}
         {tab==="offers"   && <OffersPage/>}
 
